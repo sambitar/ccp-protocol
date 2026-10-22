@@ -14,9 +14,9 @@ never carry executable code.
 
 - **Specification:** [`CCP_Working_Draft_v0.5.md`](CCP_Working_Draft_v0.5.md)
   (working draft; not final)
-- **Status:** reference implementations at 0.5.0, published to npm
-  (`ccp-core`), PyPI (`ccp-protocol`), and crates.io (`ccp-kernel`). Not
-  security-audited.
+- **Status:** reference implementations at 0.5.1. PyPI (`ccp-protocol`) and
+  crates.io (`ccp-kernel`) are published; npm `ccp-core` awaits an
+  interactive publish. Not security-audited.
 
 ## Repository map
 

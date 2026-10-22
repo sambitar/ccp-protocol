@@ -1,7 +1,7 @@
 # Release checklist
 
-Current version: **0.5.0 (draft)**. All three registries are published at
-0.5.0.
+Current version: **0.5.1 (draft)**. PyPI and crates.io are published at
+0.5.1; npm 0.5.1 awaits an interactive 2FA publish.
 
 > Local artifacts below were built from a clean working tree. Rebuild
 > everything from the tagged commit before any publish; the working tree may
@@ -11,9 +11,9 @@ Current version: **0.5.0 (draft)**. All three registries are published at
 
 | Registry | Artifact | Local check | Publish status |
 | --- | --- | --- | --- |
-| npm (`ccp-core`) | `ccp-core-0.5.0.tgz` — 48 files, 29.4 kB | `npm pack --dry-run`; contains only `dist/`, `README.md`, `package.json` | **Published 0.5.0** |
-| PyPI (`ccp-protocol`) | `ccp_protocol-0.5.0-py3-none-any.whl` — 29,537 bytes | wheel built; includes `ccp.adapters` and `ccp.stores_sqlite` | **Published 0.5.0** |
-| crates.io (`ccp-kernel`) | `ccp-kernel-0.5.0.crate` — 17 files, 18.6 KiB compressed | `cargo package` verified the build | **Published 0.5.0** |
+| npm (`ccp-core`) | `ccp-core-0.5.1.tgz` — 50 files, 41.0 kB | `npm pack`; contains only `dist/`, `README.md`, `package.json` | **Not yet published** |
+| PyPI (`ccp-protocol`) | `ccp_protocol-0.5.1-py3-none-any.whl` — 41,886 bytes | wheel built; includes `ccp.adapters`, `ccp.identity`, `ccp.grants`, `ccp.stores_sqlite` | **Published 0.5.1** |
+| crates.io (`ccp-kernel`) | `ccp-kernel-0.5.1.crate` — 17 files, 18.7 KiB compressed | `cargo package` verified the build | **Published 0.5.1** |
 | Maven Central | none | — | Not prepared: no Gradle artifact; the JVM binding is a script + JNA |
 | SwiftPM | none | — | Deferred: Swift toolchain; Apple targets need Xcode |
 | Google Maven (AAR) | Android `.so` only | arm64 + x86_64 ELF verified | Blocked: Android SDK/Gradle for an AAR |
@@ -21,9 +21,9 @@ Current version: **0.5.0 (draft)**. All three registries are published at
 Local artifact hashes (crate line is the published registry checksum):
 
 ```
-9237bc4545d9fba3a4efb32e0c5d4454ec7b5878de41240bd71afd6c513d667a  ccp-core-0.5.0.tgz
-136ecad147841be55390dda2b6b11b03b6ec69a2f2ace7ed107a4974e862032a  ccp_protocol-0.5.0-py3-none-any.whl
-da704d7bccbab01d589d9840d80f3e608b97d40227a288f5f67fdf364e5de4f8  ccp-kernel-0.5.0.crate
+d3353fc8a5905966efa1ae454f1acb7d08b73cda31e8234b6f857a496716f595  ccp-core-0.5.1.tgz
+3ecbe3e313de2bf721c25aff0ca3611c0788fafb60cca56c834ca68aad647b9a  ccp_protocol-0.5.1-py3-none-any.whl
+e2e22cfe757fc8ee5c7799e6df75df11d79309e02b5cceb830a0aee7dd5bb077  ccp-kernel-0.5.1.crate
 ```
 
 ## Blockers
@@ -31,7 +31,8 @@ da704d7bccbab01d589d9840d80f3e608b97d40227a288f5f67fdf364e5de4f8  ccp-kernel-0.5
 1. **License.** The repository is Apache-2.0 (`LICENSE`, `NOTICE`), and the
    npm, PyPI, and crates.io manifests declare it. A separate specification
    licence may be adopted later (§26.8).
-2. **Registry credentials.** All three registries are published at 0.5.0.
+2. **Registry credentials.** PyPI and crates.io are published at 0.5.1; npm
+   still needs an interactive security-key publish.
 3. **Clean-tree release.** Rebuild from the tagged commit; do not ship the
    working tree.
 4. **Independent review** before high-impact capabilities (§17).
@@ -87,8 +88,9 @@ These are source integrations, not registry packages:
 
 ## Publish
 
-PyPI `ccp-protocol` **0.5.0**, npm `ccp-core` **0.5.0**, and crates.io
-`ccp-kernel` **0.5.0** are published.
+PyPI `ccp-protocol` **0.5.1** and crates.io `ccp-kernel` **0.5.1** are
+published. npm `ccp-core` **0.5.1** is built and pending an interactive
+publish.
 
 1. Rebuild from the tagged commit with the `Build artifacts` commands above;
    do not publish a working-tree tarball.
@@ -133,9 +135,9 @@ quickstarts (see `Clean-environment verification`).
 - [ ] Tag the commit; rebuild all artifacts from the tag
 - [ ] Run the full gate (below) on the tag
 - [x] Clean-environment verification (packed npm tarball, wheel, crate)
-- [x] Publish PyPI (`ccp-protocol` 0.5.0)
-- [x] Publish npm (`ccp-core` 0.5.0)
-- [x] Publish crates.io (`ccp-kernel` 0.5.0)
+- [x] Publish PyPI (`ccp-protocol` 0.5.1)
+- [ ] Publish npm (`ccp-core` 0.5.1) — needs interactive 2FA
+- [x] Publish crates.io (`ccp-kernel` 0.5.1)
 - [x] Adopt transport and namespace profiles normatively (§25.7, §19.2.1)
 - [x] Adopt the identity and admission profile (§25.8)
 - [ ] Install each package in a clean container and run the quickstarts:
@@ -171,7 +173,7 @@ Expected: all suites green; 51 v1 + 38 v2 + 8 v3 + 39 v4 + 20 v5 vectors
 (v4 is TypeScript and Python only; v5 is contract validation); WASM 97/97;
 Kotlin 109/109; C smoke ok; interop wires identical; all three packages build.
 
-## Clean-environment verification (done)
+## Clean-environment verification (0.5.0)
 
 Performed from the packaged artifacts, not the source tree:
 
