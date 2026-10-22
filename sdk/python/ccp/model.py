@@ -97,7 +97,13 @@ class Manifest:
 
 @dataclass
 class Grant:
-    """The consumer's local authorization record (§26.1)."""
+    """The consumer's local authorization record (§26.1).
+
+    The lifecycle methods below only mutate this object. Persist it with the
+    store, or use ``Runtime.pause_grant`` / ``suspend_grant`` /
+    ``resume_grant`` / ``revoke_grant``, which also audit the change. A
+    durable store will not see a bare mutation.
+    """
 
     id: str
     requester_key: str

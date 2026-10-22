@@ -51,7 +51,47 @@ device; enforceable limits; irreversible effects; confirmation policy;
 duplicate/retry/crash behavior; what revocation can and cannot undo; what the
 result may leak; and what metadata remains visible.
 
-### Hard rules
+### Registering a host
+
+A host declares what it may do. The defaults are local, offline, and
+field-free, so forgetting metadata cannot widen a grant.
+
+```ts
+hosts.registerHost("store.read", (id) => store[id]);
+// -> { network: false, placement: ["local"], fields: [] }
+
+hosts.registerHost("net.request", (url) => fetch(url), {
+  network: true,
+  placement: ["local", "remote"],
+  fields: ["query"],
+});
+```
+
+```python
+hosts.register_host("store.read", lambda item_id: store[item_id])
+hosts.register_host(
+    "net.request",
+    lambda url: fetch(url),
+    network=True,
+    placement=["local", "remote"],
+    fields=["query"],
+)
+```
+
+The runtime compares this against the intent and the grant before every
+invocation:
+
+| Check | Refusal |
+| --- | --- |
+| Intent placement is in `grant.placement` | `capability_unavailable` |
+| Host supports the intent's placement | `capability_unavailable` |
+| Host needs network only if `grant.egress.network` is true | `capability_unavailable` |
+| Every host field is in `grant.egress.fields` | `capability_unavailable` |
+
+The same ceiling is re-checked on each `HostAccess.call`, so an executor
+cannot reach past the grant with a dynamic call.
+
+## Hard rules
 
 - A provider description or registry badge never authorizes anything
   (§19.3).

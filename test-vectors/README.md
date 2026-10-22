@@ -7,7 +7,7 @@ by a reference script that is also a runnable implementation of the rule.
 - Spec: `../CCP_Working_Draft_v0.5.md`
 - Rules implemented: §25.1 (strict canonical JSON), §25.2 (Ed25519),
   §26.3 (side-effect state machine), §10.3/§26.1 (signal validation and
-  grant matching).
+  grant matching), §25.8 (identity documents and admission policies).
 
 ## Files
 
@@ -19,6 +19,7 @@ by a reference script that is also a runnable implementation of the rule.
 | `validation.json` | `validation.py` | the §10.3 validation-decision matrix (grant matching, expiry, replay, limits, confirmation, etc.). |
 | `v2/` | `v2/generate.py` | adversarial canonical and validation boundaries; see `v2/README.md`. |
 | `v3/` | `v3/generate.py` | 0.5 dual-label compatibility; see `v3/README.md`. |
+| `v4/identity.json` | `v4/generate.py` | §25.8 identity documents, admission policies, and admission decisions. |
 
 ## Regenerating
 
@@ -27,14 +28,16 @@ python3 generate_vectors.py
 python3 validation.py
 /usr/bin/python3 v2/generate.py
 /usr/bin/python3 v3/generate.py
+/usr/bin/python3 v4/generate.py
 ```
 
 v1 is frozen. v2 is additive and is exercised by `conformance/run.py` and
 the SDK test suites.
 
 `generate_vectors.py` requires Python 3.8+ and the `cryptography` package.
-`validation.py` is pure standard library. Each script exits 0 only if
-every vector passes its self-check.
+`validation.py` is pure standard library. `v4/generate.py` also requires
+`cryptography`: it signs with fixed seeds. Each script exits 0 only if every
+vector passes its self-check.
 
 ## `canonical-json.json`
 
@@ -112,3 +115,26 @@ already-authenticated requester key (signature verification is covered by
 `ed25519.json`), and the signal is already parsed (malformed input is
 covered by `canonical-json.json`). Timestamps are compared as strings
 because every vector uses the same normalized RFC 3339 UTC form.
+
+## `v4/identity.json`
+
+Three arrays, all keyed by `id`:
+
+- `identities` — each entry has a signed `document`, a `now`, optional
+  `expected_identity` / `manifest_digest` / `policy_digest` inputs, and an
+  `expected` result: `valid` or an identity-layer code such as
+  `unauthenticated`, `identity_expired`, `identity_changed`,
+  `manifest_mismatch`, `policy_mismatch`, or `invalid_request`.
+- `policies` — the same shape for `ccp.admission-policy.v1`, with
+  `expected_host` as the optional pin and `policy_expired` added to the
+  possible results.
+- `admissions` — a verified `policy`, a `verify_now`, a `request`
+  (`requester_key`, `contact_id`, `intent`, `risk`, optional
+  `destination`, `now`), and an `expected` decision of `allow`, `confirm`,
+  or `deny`. When the decision is `allow`, `expected_rule` names the rule.
+  A `revoked` array holds deterministic grant ids the host has revoked, and
+  `expected_reason` pins the reason (for example `grant_revoked`).
+
+The vector file is produced by `v4/generate.py`, which signs every document
+with a fixed seed and self-checks the admission decisions with a small
+reference evaluator.

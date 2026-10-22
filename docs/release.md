@@ -137,6 +137,7 @@ quickstarts (see `Clean-environment verification`).
 - [x] Publish npm (`ccp-core` 0.5.0)
 - [x] Publish crates.io (`ccp-kernel` 0.5.0)
 - [x] Adopt transport and namespace profiles normatively (§25.7, §19.2.1)
+- [x] Adopt the identity and admission profile (§25.8)
 - [ ] Install each package in a clean container and run the quickstarts:
       `docs/guides/{web,provider,agent,runtime}.md`
 - [ ] Verify the installed packages include the expected files
@@ -166,8 +167,9 @@ npm --prefix sdk/typescript pack --dry-run
 cargo package --allow-dirty --manifest-path kernel/Cargo.toml
 ```
 
-Expected: all suites green; 51 v1 + 38 v2 + 8 v3 vectors; WASM 97/97;
-Kotlin 109/109; C smoke ok; interop wires identical; all three packages build.
+Expected: all suites green; 51 v1 + 38 v2 + 8 v3 + 39 v4 vectors (v4 is
+TypeScript and Python only); WASM 97/97; Kotlin 109/109; C smoke ok; interop
+wires identical; all three packages build.
 
 ## Clean-environment verification (done)
 

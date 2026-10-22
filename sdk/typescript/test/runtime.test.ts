@@ -175,4 +175,96 @@ describe("Runtime", () => {
       "grant_revoked"
     );
   });
+
+  it("revokes a grant through the runtime", async () => {
+    const world = buildWorld();
+    const revoked = await world.runtime.revokeGrant("g-1", "user asked");
+    expect(revoked.state).toBe("revoked");
+    expect(revoked.state_reason).toBe("user asked");
+    expect((await world.runtime.grants.get("g-1"))?.state).toBe("revoked");
+    expect(
+      (await world.runtime.submit(signalFor(world), REQUESTER_PUBLIC)).error
+    ).toBe("grant_revoked");
+    const audit = world.runtime.audit as unknown as {
+      events(): Array<{ event: string }>;
+    };
+    expect(audit.events().some((event) => event.event === "revoked")).toBe(true);
+  });
+
+  it("rejects revoking an unknown grant", async () => {
+    const world = buildWorld();
+    await expect(world.runtime.revokeGrant("missing")).rejects.toMatchObject({
+      code: "no_matching_grant",
+    });
+  });
+
+  it("revocation invalidates an open confirmation", async () => {
+    const world = buildWorld({ confirmation: "per_action" });
+    const first = await world.runtime.submit(
+      signalFor(world, { requestId: "req-a" }),
+      REQUESTER_PUBLIC
+    );
+    await world.runtime.revokeGrant("g-1");
+    expect((await world.runtime.confirm(first.pending_id!, true)).error).toBe(
+      "grant_revoked"
+    );
+  });
+
+  it("pauses and resumes without resetting limits", async () => {
+    const world = buildWorld();
+    expect(
+      (await world.runtime.submit(signalFor(world, { requestId: "r1" }), REQUESTER_PUBLIC))
+        .outcome
+    ).toBe("authorized");
+
+    await world.runtime.pauseGrant("g-1", "temporary stop");
+    const paused = await world.runtime.submit(
+      signalFor(world, { requestId: "r2" }),
+      REQUESTER_PUBLIC
+    );
+    expect(paused.error).toBe("grant_paused");
+    expect(paused.detail).toBe("temporary stop");
+
+    const resumed = await world.runtime.resumeGrant("g-1");
+    expect(resumed.state).toBe("active");
+    expect(
+      (await world.runtime.submit(signalFor(world, { requestId: "r3" }), REQUESTER_PUBLIC))
+        .outcome
+    ).toBe("authorized");
+    expect(await world.runtime.limits.counters("g-1")).toEqual({
+      calls_per_hour: 2,
+    });
+  });
+
+  it("suspends with a reason and waits for an explicit resume", async () => {
+    const world = buildWorld();
+    await world.runtime.suspendGrant("g-1", "requester key changed");
+    const suspended = await world.runtime.submit(
+      signalFor(world),
+      REQUESTER_PUBLIC
+    );
+    expect(suspended.error).toBe("grant_suspended");
+    expect(suspended.detail).toBe("requester key changed");
+  });
+
+  it("never resumes a revoked or expired grant", async () => {
+    const world = buildWorld();
+    await world.runtime.revokeGrant("g-1");
+    await expect(world.runtime.resumeGrant("g-1")).rejects.toMatchObject({
+      code: "grant_revoked",
+    });
+
+    const expired = buildWorld({ expiresAt: "2026-10-22T11:00:00Z" });
+    await expired.runtime.pauseGrant("g-1");
+    await expect(expired.runtime.resumeGrant("g-1")).rejects.toMatchObject({
+      code: "grant_expired",
+    });
+  });
+
+  it("suspends every grant bound to a contact", async () => {
+    const world = buildWorld();
+    await world.runtime.grants.add({ ...world.grant, id: "g-2" });
+    expect(await world.runtime.suspendContact("c-1", "identity review")).toBe(2);
+    expect((await world.runtime.grants.get("g-2"))?.state).toBe("suspended");
+  });
 });

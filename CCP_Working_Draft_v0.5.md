@@ -157,8 +157,10 @@ CCP aims to provide:
 
 CCP does not, by itself:
 
--   Define how two parties initially establish identity or decide
-    whether to trust each other.
+-   Define a universal identity authority, contact directory, or trust
+    decision. §25.8 fixes a self-certifying document format and the
+    introduction sequence; which identities a person trusts remains a
+    local decision (§7.3).
 -   Define a payment rail, cryptocurrency, wallet, banking service, or
     financial compliance regime.
 -   Guarantee that a recipient's data is private from a remote executor
@@ -335,6 +337,10 @@ consumer's address or sending an unsolicited signal. Clients SHOULD
 provide controls for unknown senders, rate limiting, and contact
 removal.
 
+The introduction format, the fields of a contact record, and the rule
+that accepting an invitation creates no permission are fixed by
+§25.8.2.
+
 ### 7.3 Contact is not blanket trust
 
 Adding a contact MUST NOT automatically approve every intent in its
@@ -350,7 +356,9 @@ consumer re-approves or explicitly confirms the change. A name, avatar,
 domain, or registry badge alone is insufficient proof of continuity.
 
 Recovery, multi-device identity, key rotation, and key revocation
-require a dedicated profile. They are not fully specified here.
+require a dedicated profile. They are not fully specified here. §25.8
+fixes the single-key document format and the verification sequence that
+triggers suspension.
 
 ## 8. Capability manifests
 
@@ -1446,6 +1454,228 @@ normative for implementations that claim the HTTP profile.
 
 The explanatory guide is `docs/guides/transport.md`.
 
+### 25.8 Identity, introduction, and admission
+
+This section fixes the wire format and semantics that §7.2 and §7.4
+leave to a profile. It does not define trust: it defines what is
+transmitted, what a client MUST verify, and what a host MUST NOT do
+without a human decision.
+
+#### 25.8.1 Identity document
+
+An identity document is a signed, self-certifying statement that binds a
+public key to a display name, optional endpoints, and the digests of the
+publisher's current manifest and admission policy.
+
+``` json
+{
+  "ccp": "0.5-draft",
+  "type": "ccp.identity.v1",
+  "identity": "key:ed25519:BASE64_PUBLIC_KEY",
+  "name": "Example Service",
+  "roles": ["provider"],
+  "endpoints": [
+    {
+      "transport": "https",
+      "manifest": "https://example.com/manifest",
+      "signal": "https://example.com/ccp"
+    }
+  ],
+  "manifest_digest": "sha256:HEX_DIGEST",
+  "policy_digest": "sha256:HEX_DIGEST",
+  "issued_at": "2026-10-22T12:00:00Z",
+  "expires_at": "2027-10-22T12:00:00Z",
+  "signature": "ed25519:BASE64_SIGNATURE"
+}
+```
+
+-   `ccp`, `type`, `identity`, `issued_at`, `expires_at`, and
+    `signature` are required. Every other field is optional.
+-   `identity` MUST be the key that verifies `signature`. The document
+    is therefore self-certifying: no registry, account, or certificate
+    authority is needed to check it (§25.2).
+-   `roles` values are `provider`, `requester`, and `consumer`; a
+    document MAY declare more than one. Roles are descriptive and
+    confer no authority.
+-   `endpoints` entries carry a `transport` name and at least one of
+    `manifest` or `signal`. Publishing an endpoint is a separate
+    disclosure from publishing a key; a document MUST NOT be treated as
+    permission to contact the endpoint (§12).
+-   `manifest_digest` and `policy_digest` are the digests defined in
+    §25.1 over the signing bytes of the corresponding document. If
+    either document changes, the identity document MUST be reissued.
+-   `expires_at` MUST sort after `issued_at`. A document is valid while
+    `issued_at` is not more than the clock skew in the future and `now`
+    is not after `expires_at`. The clock skew for this profile is 120
+    seconds.
+-   An identity document MUST NOT carry private data, credentials, or
+    authorization. Holding a copy of it grants nothing.
+-   `signature` is computed as in §25.1 and MUST be the final field of
+    the wire form.
+
+A client MUST verify a document before using any field from it:
+
+1.  Parse strictly (§25.1) and reject anything that is not an object.
+2.  Check that `ccp` is accepted (§19.1) and that `type` is
+    `ccp.identity.v1`.
+3.  Check that `identity` is a well-formed `key:ed25519:` identifier
+    that decodes to exactly 32 bytes.
+4.  Verify `signature` over the signing bytes using `identity`. A
+    failure is `unauthenticated`.
+5.  If the caller expected a specific identity, compare it with
+    `identity`. A difference is `identity_changed` and MUST suspend
+    affected grants (§7.4).
+6.  Check the validity window. A document outside it is
+    `identity_expired`.
+7.  If `manifest_digest` or `policy_digest` is present and the caller
+    holds the corresponding document, the digests MUST match.
+    A difference is `manifest_mismatch` or `policy_mismatch`.
+8.  Only then may the client display the name and create or update a
+    contact record.
+
+The codes in this sequence are identity-layer results. They are
+distinct from the §10.4 decision codes and MUST NOT be returned as a
+signal outcome.
+
+#### 25.8.2 Introduction and contacts
+
+An invitation is a transport artifact, not a protocol object. It MUST
+resolve to an identity document and to a fingerprint the recipient can
+compare out of band (§7.2). An invitation SHOULD be single-use and MUST
+expire.
+
+Accepting an invitation creates a contact record only. It MUST NOT:
+
+-   create a grant;
+-   pre-authorize any intent, including read-class intents;
+-   install or extend an admission rule (§25.8.3).
+
+A contact record contains at least the verified `identity`, the display
+name, the channel binding from §25.4, the introduction source, and the
+first-seen time. It is local and MUST NOT be treated as consent.
+
+The fact that an invitation was used is not proof of identity. The
+accepting side MUST verify the fingerprint through the authenticated
+channel or out of band before relying on the contact for anything
+beyond naming it.
+
+#### 25.8.3 Admission policy
+
+An admission policy is a signed, versioned rule set that lets a host
+answer requests without asking a human each time. It is signed by the
+host's own identity and stored locally; it is never authority over the
+requester.
+
+``` json
+{
+  "ccp": "0.5-draft",
+  "type": "ccp.admission-policy.v1",
+  "host": "key:ed25519:BASE64_PUBLIC_KEY",
+  "version": 1,
+  "default": "confirm",
+  "rules": [
+    {
+      "id": "r-agent-reads",
+      "contacts": ["c-agent-1"],
+      "intents": ["files.search", "calendar.read"],
+      "risk": "read",
+      "limits": {"calls_per_hour": 60},
+      "confirmation": "none",
+      "expires_at": "2027-01-01T00:00:00Z"
+    }
+  ],
+  "issued_at": "2026-10-22T12:00:00Z",
+  "expires_at": "2027-01-01T00:00:00Z",
+  "signature": "ed25519:BASE64_SIGNATURE"
+}
+```
+
+-   `ccp`, `type`, `host`, `version`, `default`, `rules`, `issued_at`,
+    `expires_at`, and `signature` are required. `version` is a positive
+    integer and MUST increase when a rule is added or widened. `rules`
+    MUST contain at least one rule.
+-   `host` MUST be the key that verifies `signature`.
+-   `default` MUST be `confirm` or `deny` and MUST NOT be `allow`.
+    A policy that admits unmatched requests is invalid.
+-   A rule MUST name at least one of `contacts` or `requesters`.
+    A rule that names neither would match every caller and MUST be
+    rejected.
+-   `risk` MUST be `read` or `disclose`. A policy MUST NOT admit
+    `write` or `irreversible` intents unattended (§26.2), and a policy
+    that names them is invalid.
+-   `confirmation` MUST be `none`; other values belong to a grant, not
+    to a policy.
+-   A `disclose` rule MUST carry a non-empty `destinations` array of
+    pinned identifiers. Admission requires the request's destination to
+    appear in that array (§26.2). A `read` rule MUST NOT carry
+    `destinations`.
+-   `intents` MUST be non-empty. `expires_at` on a rule MUST NOT sort
+    after the policy's own `expires_at`. Rule `id` values MUST be
+    unique within the policy.
+-   `limits` uses the same keys and units as a grant's `limits`
+    (§26.1). An admitted grant MUST NOT carry a broader limit than the
+    matching rule.
+
+The host evaluates rules in array order; order is significant (§25.1)
+and the first matching rule wins. A rule matches when all of the
+following hold:
+
+-   the request's intent appears in `intents`;
+-   the request's risk class equals the rule's `risk`;
+-   if `contacts` is present, the request's contact id appears in it;
+-   if `requesters` is present, the requester key appears in it;
+-   for `disclose`, the request's destination appears in `destinations`;
+-   the rule has not expired.
+
+A match yields `allow`. No match yields the policy `default`. An expired
+policy yields `deny`.
+
+`allow` is not an execution. The host MUST create or reuse a grant
+record for exactly the matched intent, the rule's limits, and an expiry
+no later than the earlier of the rule and policy expiries. The grant
+proceeds through §10.3 normally, and the audit record MUST identify the
+rule that admitted it.
+
+Revocation wins. A grant revoked by the consumer MUST NOT be re-created
+by a policy match until that rule is separately re-approved. A policy
+MUST NOT override an explicit pause, suspension, or revocation.
+
+To make that durable, a policy-created grant MUST have a deterministic
+identifier derived from the policy digest, the rule id, the requester
+key, and the intent. For this profile the identifier is `pg-` followed
+by the first 32 lowercase hexadecimal digits of SHA-256 over the
+canonical JSON (§25.1) of:
+
+``` json
+{"intent": "INTENT", "policy": "sha256:HEX", "requester": "key:ed25519:BASE64", "rule": "RULE_ID"}
+```
+
+Reusing the identifier means every later admission resolves to the same
+grant record, including its revoked state, and the host MUST return
+`grant_revoked` when that record is revoked. Changing the policy changes
+its digest and therefore the identifiers; that is the explicit
+re-approval the rule requires.
+
+#### 25.8.4 Key changes
+
+This profile uses one signing key per identity (§25.2). If an identity
+document presents a different key for a known contact, the client MUST
+suspend the affected grants (§7.4) and require a new introduction. A
+grant suspended for this reason MUST NOT be resumable: the old grant is
+bound to the old key, so resuming it would restore authority to a key
+that no longer represents the contact. The consumer creates a new grant
+after the introduction.
+
+A failed signature check MUST NOT suspend anything, or any party could
+force a suspension by sending a malformed document. Only a document
+whose signature verifies under a key different from the known contact's
+key is an identity change.
+
+A continuity document signed by both keys, multi-device identities, and
+recovery are reserved for a later profile.
+
+The explanatory guide is `docs/guides/identity.md`.
+
 ## 26. Core semantics (resolutions)
 
 This section resolves the remaining items from §22. It is normative for
@@ -1605,6 +1835,25 @@ High-risk functions (`files.write`, `net.request`, `payment.prepare`,
 profiles, not the core, and each requires its own review (§19.2, §25.6).
 A runtime MUST reject an intent whose host functions are not in the
 installed catalogue.
+
+Each installed host function MUST declare:
+
+-   the placement classes it can serve (`local`, `remote`, `delegated`);
+-   whether it may send data off the device;
+-   the data categories it may transmit.
+
+The defaults MUST be the safe ones: local placement, no network, no
+fields. Before executing an intent, a runtime MUST refuse with
+`capability_unavailable` when:
+
+-   the intent's declared placement is not in the grant's `placement`;
+-   a required host cannot serve that placement;
+-   a required host needs network egress the grant does not allow;
+-   a required host may transmit a data category the grant does not
+    allow.
+
+The same check MUST apply on every host call, not only once before
+execution, so a host that changes after the grant cannot widen it.
 
 ### 26.5 Remote execution
 

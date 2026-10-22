@@ -12,6 +12,11 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { decide, parseStrict, serialize } from "../dist/index.js";
+import {
+  admit,
+  verifyAdmissionPolicy,
+  verifyIdentityDocument,
+} from "../dist/index.js";
 
 const INTENT_SPEC = {
   required_capabilities: ["store.read"],
@@ -80,6 +85,103 @@ function runValidation(data) {
   };
 }
 
+function codeOf(error) {
+  if (error && typeof error === "object" && "code" in error) {
+    return error.code;
+  }
+  return `error:${error instanceof Error ? error.message : error}`;
+}
+
+function summarise(total, failures) {
+  return { passed: total - failures.length, failed: failures.length, failures };
+}
+
+function runIdentities(data) {
+  const failures = [];
+  for (const vector of data.identities) {
+    let got;
+    try {
+      verifyIdentityDocument(vector.document, {
+        now: vector.now,
+        expectedIdentity: vector.expected_identity,
+        manifestDigest: vector.manifest_digest,
+        policyDigest: vector.policy_digest,
+      });
+      got = "valid";
+    } catch (error) {
+      got = codeOf(error);
+    }
+    if (got !== vector.expected) {
+      failures.push({ id: vector.id, expected: vector.expected, got });
+    }
+  }
+  return summarise(data.identities.length, failures);
+}
+
+function runPolicies(data) {
+  const failures = [];
+  for (const vector of data.policies) {
+    let got;
+    try {
+      verifyAdmissionPolicy(vector.document, {
+        now: vector.now,
+        expectedHost: vector.expected_host,
+      });
+      got = "valid";
+    } catch (error) {
+      got = codeOf(error);
+    }
+    if (got !== vector.expected) {
+      failures.push({ id: vector.id, expected: vector.expected, got });
+    }
+  }
+  return summarise(data.policies.length, failures);
+}
+
+function runAdmissions(data) {
+  const failures = [];
+  for (const vector of data.admissions) {
+    let got;
+    try {
+      const policy = verifyAdmissionPolicy(vector.policy, {
+        now: vector.verify_now,
+      });
+      const result = admit(
+        policy,
+        {
+          requesterKey: vector.request.requester_key,
+          contactId: vector.request.contact_id,
+          intent: vector.request.intent,
+          risk: vector.request.risk,
+          destination: vector.request.destination,
+          now: vector.request.now,
+        },
+        { revoked: new Set(vector.revoked ?? []) }
+      );
+      got =
+        vector.expected_rule === undefined
+          ? result.decision
+          : `${result.decision}:${result.ruleId}`;
+      if (vector.expected_reason !== undefined) {
+        got += `:${result.reason}`;
+      }
+    } catch (error) {
+      got = codeOf(error);
+    }
+    let expected =
+      vector.expected_rule === undefined
+        ? vector.expected
+        : `${vector.expected}:${vector.expected_rule}`;
+    if (vector.expected_reason !== undefined) {
+      expected += `:${vector.expected_reason}`;
+    }
+    if (got !== expected) {
+      failures.push({ id: vector.id, expected, got });
+    }
+  }
+  return summarise(data.admissions.length, failures);
+}
+
 function main() {
   const directory = process.argv[2];
   if (!directory) {
@@ -95,6 +197,12 @@ function main() {
   }
   if (existsSync(join(directory, "validation.json"))) {
     summary.validation = runValidation(load(directory, "validation.json"));
+  }
+  if (existsSync(join(directory, "identity.json"))) {
+    const data = load(directory, "identity.json");
+    summary.identity = runIdentities(data);
+    summary.policy = runPolicies(data);
+    summary.admission = runAdmissions(data);
   }
 
   console.log(JSON.stringify(summary, null, 2));

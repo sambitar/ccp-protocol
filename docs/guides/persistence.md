@@ -18,6 +18,11 @@ wiring.
 | `PendingStore` | `put`, `get`, `take` | `take` removes and returns atomically, so a confirmation resolves at most once. |
 | `AuditStore` | `append` | Append-only. Do not expose update or delete to the runtime's database role. |
 
+`GrantStore.add` is also the update path. Lifecycle transitions
+(`pauseGrant`, `suspendGrant`, `resumeGrant`, `revokeGrant`) and policy
+admission write the whole record with `add`, so an implementation must treat
+it as an upsert and must not cache grants across requests.
+
 ## Reference schema
 
 Names are illustrative; only the constraints matter.

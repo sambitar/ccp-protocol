@@ -70,18 +70,29 @@ responsibilities and are listed below.
 2. **Regex dialects** are not normalized; use the common subset.
 3. **In-memory stores** are the default; durability and atomicity are the
    host's responsibility.
-4. **Remote execution and transport** are not implemented, so egress and
-   endpoint authentication are deployment concerns.
-5. **No license chosen**, blocking registry publication (§26.8).
-6. **Swift/Apple and Android app builds** are not tested here.
-7. **Fuzzing** is deterministic property testing, not coverage-guided
+4. **Remote execution** is not implemented; the HTTP transport is
+   specified (§25.7), but egress enforcement and endpoint authentication
+   remain deployment concerns.
+5. **Identity bootstrap is format-only.** §25.8 fixes the document and
+   admission-policy formats and the verification sequence. It provides no
+   discovery, no trust decision, and no key rotation. A host that creates
+   contacts from invite links without verifying the fingerprint has no
+   identity guarantee.
+6. **Revocation durability depends on the deterministic id.** §25.8.3
+   fixes a `pg-…` id derived from the policy digest, rule, requester, and
+   intent, and `admit()` refuses revoked ids. A host that invents its own
+   grant ids, or that drops revoked ids, re-opens the resurrection path.
+7. **License is Apache-2.0**; a separate specification licence remains a
+   governance choice (§26.8).
+8. **Swift/Apple and Android app builds** are not tested here.
+9. **Fuzzing** is deterministic property testing, not coverage-guided
    fuzzing; `cargo-fuzz` has not been run.
 
 ## Checklist
 
 - [x] Appendix A invariants mapped to code and tests
 - [x] §17 threats mapped to controls and residual risks
-- [x] Cross-implementation conformance (v1 + v2) green
+- [x] Cross-implementation conformance (v1 + v2 + v3 + v4) green
 - [x] Property tests for canonicalization and decisions
 - [x] Portability defects fixed and covered
 - [ ] Independent third-party review

@@ -17,6 +17,13 @@ sys.path.insert(0, SDK_DIR)
 from ccp import canonical  # noqa: E402
 from ccp.canonical import CanonicalError  # noqa: E402
 from ccp.decision import decide  # noqa: E402
+from ccp.identity import (  # noqa: E402
+    AdmissionRequest,
+    IdentityError,
+    admit,
+    verify_admission_policy,
+    verify_identity_document,
+)
 from ccp.model import Grant  # noqa: E402
 
 INTENT_SPEC = {
@@ -84,6 +91,95 @@ def run_validation(data):
     }
 
 
+def _summarise(total, failures):
+    return {
+        "passed": total - len(failures),
+        "failed": len(failures),
+        "failures": failures,
+    }
+
+
+def _code(exc):
+    return exc.code if hasattr(exc, "code") else "error:%s" % exc
+
+
+def run_identities(data):
+    failures = []
+    for vector in data["identities"]:
+        try:
+            verify_identity_document(
+                vector["document"],
+                now=vector["now"],
+                expected_identity=vector.get("expected_identity"),
+                manifest_digest=vector.get("manifest_digest"),
+                policy_digest=vector.get("policy_digest"),
+            )
+            got = "valid"
+        except IdentityError as exc:
+            got = exc.code
+        except Exception as exc:  # noqa: BLE001 - reported as a failure
+            got = "error:%s" % exc
+        if got != vector["expected"]:
+            failures.append({"id": vector["id"],
+                             "expected": vector["expected"], "got": got})
+    return _summarise(len(data["identities"]), failures)
+
+
+def run_policies(data):
+    failures = []
+    for vector in data["policies"]:
+        try:
+            verify_admission_policy(
+                vector["document"],
+                now=vector["now"],
+                expected_host=vector.get("expected_host"),
+            )
+            got = "valid"
+        except IdentityError as exc:
+            got = exc.code
+        except Exception as exc:  # noqa: BLE001 - reported as a failure
+            got = "error:%s" % exc
+        if got != vector["expected"]:
+            failures.append({"id": vector["id"],
+                             "expected": vector["expected"], "got": got})
+    return _summarise(len(data["policies"]), failures)
+
+
+def run_admissions(data):
+    failures = []
+    for vector in data["admissions"]:
+        request = vector["request"]
+        expected = vector["expected"]
+        if "expected_rule" in vector:
+            expected = "%s:%s" % (expected, vector["expected_rule"])
+        if "expected_reason" in vector:
+            expected = "%s:%s" % (expected, vector["expected_reason"])
+        try:
+            policy = verify_admission_policy(vector["policy"],
+                                             now=vector["verify_now"])
+            result = admit(policy, AdmissionRequest(
+                requester_key=request["requester_key"],
+                contact_id=request["contact_id"],
+                intent=request["intent"],
+                risk=request["risk"],
+                now=request["now"],
+                destination=request.get("destination"),
+            ), revoked=set(vector.get("revoked", [])))
+            got = result.decision
+            if "expected_rule" in vector:
+                got = "%s:%s" % (got, result.rule_id)
+            if "expected_reason" in vector:
+                got = "%s:%s" % (got, result.reason)
+        except IdentityError as exc:
+            got = exc.code
+        except Exception as exc:  # noqa: BLE001 - reported as a failure
+            got = "error:%s" % exc
+        if got != expected:
+            failures.append({"id": vector["id"],
+                             "expected": expected, "got": got})
+    return _summarise(len(data["admissions"]), failures)
+
+
 def main():
     if len(sys.argv) != 2:
         print("usage: python3 conformance/run.py <vectors-dir>", file=sys.stderr)
@@ -97,6 +193,11 @@ def main():
     if os.path.exists(os.path.join(directory, "validation.json")):
         summary["validation"] = run_validation(
             load(directory, "validation.json"))
+    if os.path.exists(os.path.join(directory, "identity.json")):
+        data = load(directory, "identity.json")
+        summary["identity"] = run_identities(data)
+        summary["policy"] = run_policies(data)
+        summary["admission"] = run_admissions(data)
 
     print(json.dumps(summary, indent=2))
     return 0 if all(entry["failed"] == 0 for entry in summary.values()) else 1

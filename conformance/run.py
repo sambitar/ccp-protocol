@@ -13,7 +13,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TS_DIR = os.path.join(ROOT, "sdk", "typescript")
 PY_DIR = os.path.join(ROOT, "sdk", "python")
 VECTOR_DIRS = ["test-vectors", os.path.join("test-vectors", "v2"),
-               os.path.join("test-vectors", "v3")]
+               os.path.join("test-vectors", "v3"),
+               os.path.join("test-vectors", "v4")]
 
 
 def run(command, cwd):

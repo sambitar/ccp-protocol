@@ -122,6 +122,53 @@ limits never exceed `suggested_limits`, confirmation is never relaxed,
 capabilities come from the enabled intents, and placement/egress are
 derived from them.
 
+## Identity and admission (§25.8)
+
+Publish a signed identity document, verify one for a known contact, and
+let a reviewed policy answer matching requests without a click.
+
+```ts
+import {
+  buildAdmissionPolicy,
+  buildIdentityDocument,
+  verifyAdmissionPolicy,
+  verifyIdentityDocument,
+} from "ccp-core";
+
+const identity = buildIdentityDocument(
+  { name: "Example Service", manifestDigest: manifest.digest,
+    issuedAt: "2026-10-22T00:00:00Z", expiresAt: "2027-10-22T00:00:00Z" },
+  seed
+);
+
+const peer = verifyIdentityDocument(identity, {
+  expectedIdentity: knownContactKey,
+  manifestDigest: manifest.digest,
+});
+
+const policy = verifyAdmissionPolicy(
+  buildAdmissionPolicy(
+    { version: 1, default: "confirm", rules, issuedAt, expiresAt },
+    hostSeed
+  ),
+  { expectedHost: hostKey }
+);
+
+const { result, grant } = await runtime.admitRequest({
+  policy,
+  request: { requesterKey, contactId, intent, risk, now },
+  manifest,
+});
+// result.decision is allow | confirm | deny; grant is set on allow.
+```
+
+Accepting an invitation creates a contact, never a grant. `default` must
+be `confirm` or `deny`, and only `read`/`disclose` intents can be
+admitted. Policy grants use a deterministic id, so a revocation is not
+undone by the next matching request. See
+[`docs/guides/identity.md`](../../docs/guides/identity.md) and
+[`docs/consistency-audit.md`](../../docs/consistency-audit.md).
+
 ## Durable stores
 
 `Runtime` accepts pluggable stores. The interfaces are `GrantStore`,

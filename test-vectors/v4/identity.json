@@ -1,0 +1,386 @@
+{
+  "ccp": "0.5-draft",
+  "rule": "identity documents, admission policies, and admission decisions (§25.8)",
+  "identities": [
+    {
+      "id": "id-001",
+      "name": "full document",
+      "document": "{\"ccp\":\"0.5-draft\",\"endpoints\":[{\"manifest\":\"https://example.com/manifest\",\"signal\":\"https://example.com/ccp\",\"transport\":\"https\"}],\"expires_at\":\"2027-10-22T00:00:00Z\",\"identity\":\"key:ed25519:A6EHv_POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg\",\"issued_at\":\"2026-10-22T00:00:00Z\",\"manifest_digest\":\"sha256:abababababababababababababababababababababababababababababababab\",\"name\":\"Example Service\",\"policy_digest\":\"sha256:cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\",\"roles\":[\"provider\"],\"type\":\"ccp.identity.v1\",\"signature\":\"ed25519:fvTHiv20uyYQC5Jf9B3_ymqoBoLFL8kr70S7hin_Tu3kggynroj9cyWT7U4ShJz9PTHtcGXmAznfcLRinPLBBg\"}",
+      "now": "2026-10-22T12:00:00Z",
+      "expected": "valid"
+    },
+    {
+      "id": "id-002",
+      "name": "minimal document",
+      "document": "{\"ccp\":\"0.5-draft\",\"expires_at\":\"2027-10-22T00:00:00Z\",\"identity\":\"key:ed25519:A6EHv_POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg\",\"issued_at\":\"2026-10-22T00:00:00Z\",\"type\":\"ccp.identity.v1\",\"signature\":\"ed25519:alJmxUEPzlHGti8974EkcVIUu8mHRE-4O50_-HLDu4c7CE9FU6ggdmyh1F8lEFa-NDDYvvocD2x4KOVpIsh6Dw\"}",
+      "now": "2026-10-22T12:00:00Z",
+      "expected": "valid"
+    },
+    {
+      "id": "id-003",
+      "name": "expired",
+      "document": "{\"ccp\":\"0.5-draft\",\"endpoints\":[{\"manifest\":\"https://example.com/manifest\",\"signal\":\"https://example.com/ccp\",\"transport\":\"https\"}],\"expires_at\":\"2025-06-01T00:00:00Z\",\"identity\":\"key:ed25519:A6EHv_POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg\",\"issued_at\":\"2025-01-01T00:00:00Z\",\"manifest_digest\":\"sha256:abababababababababababababababababababababababababababababababab\",\"name\":\"Example Service\",\"policy_digest\":\"sha256:cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\",\"roles\":[\"provider\"],\"type\":\"ccp.identity.v1\",\"signature\":\"ed25519:ZazwWC6FYQ0gMdxcLMj4XXOWFE_UwYZ9KPMqIRIaCJGkURDnwjoUzXeThJ1jT6b_km5sPvUzo0RhEibX6chIDg\"}",
+      "now": "2026-10-22T12:00:00Z",
+      "expected": "identity_expired"
+    },
+    {
+      "id": "id-004",
+      "name": "not yet valid",
+      "document": "{\"ccp\":\"0.5-draft\",\"endpoints\":[{\"manifest\":\"https://example.com/manifest\",\"signal\":\"https://example.com/ccp\",\"transport\":\"https\"}],\"expires_at\":\"2028-01-01T00:00:00Z\",\"identity\":\"key:ed25519:A6EHv_POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg\",\"issued_at\":\"2027-06-01T00:00:00Z\",\"manifest_digest\":\"sha256:abababababababababababababababababababababababababababababababab\",\"name\":\"Example Service\",\"policy_digest\":\"sha256:cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\",\"roles\":[\"provider\"],\"type\":\"ccp.identity.v1\",\"signature\":\"ed25519:-4K6NNxWA6Al7LTM9Tka8VQT5ZwItDYKHguTKl6HuTbf2uH60JUAohdarStyCQczffACppqDueXlslR0d_tECQ\"}",
+      "now": "2026-10-22T12:00:00Z",
+      "expected": "identity_expired"
+    },
+    {
+      "id": "id-005",
+      "name": "signature by another key",
+      "document": "{\"ccp\":\"0.5-draft\",\"endpoints\":[{\"manifest\":\"https://example.com/manifest\",\"signal\":\"https://example.com/ccp\",\"transport\":\"https\"}],\"expires_at\":\"2027-10-22T00:00:00Z\",\"identity\":\"key:ed25519:A6EHv_POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg\",\"issued_at\":\"2026-10-22T00:00:00Z\",\"manifest_digest\":\"sha256:abababababababababababababababababababababababababababababababab\",\"name\":\"Example Service\",\"policy_digest\":\"sha256:cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\",\"roles\":[\"provider\"],\"type\":\"ccp.identity.v1\",\"signature\":\"ed25519:z_1FpPHOV0HFf0wGEx2WsNuiRGgMbbZwsB0g21OaENRAIVBpLx0y8dNvwa8V2mHU0WXUvPQXvTKPsGCCkMDgCg\"}",
+      "now": "2026-10-22T12:00:00Z",
+      "expected": "unauthenticated"
+    },
+    {
+      "id": "id-006",
+      "name": "known contact has another key",
+      "document": "{\"ccp\":\"0.5-draft\",\"endpoints\":[{\"manifest\":\"https://example.com/manifest\",\"signal\":\"https://example.com/ccp\",\"transport\":\"https\"}],\"expires_at\":\"2027-10-22T00:00:00Z\",\"identity\":\"key:ed25519:A6EHv_POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg\",\"issued_at\":\"2026-10-22T00:00:00Z\",\"manifest_digest\":\"sha256:abababababababababababababababababababababababababababababababab\",\"name\":\"Example Service\",\"policy_digest\":\"sha256:cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\",\"roles\":[\"provider\"],\"type\":\"ccp.identity.v1\",\"signature\":\"ed25519:fvTHiv20uyYQC5Jf9B3_ymqoBoLFL8kr70S7hin_Tu3kggynroj9cyWT7U4ShJz9PTHtcGXmAznfcLRinPLBBg\"}",
+      "now": "2026-10-22T12:00:00Z",
+      "expected": "identity_changed",
+      "expected_identity": "key:ed25519:JUO5L_EJVRFHatyDadtt3JM2ZaEZeN2hQE7hBmypVZ0"
+    },
+    {
+      "id": "id-007",
+      "name": "manifest digest mismatch",
+      "document": "{\"ccp\":\"0.5-draft\",\"endpoints\":[{\"manifest\":\"https://example.com/manifest\",\"signal\":\"https://example.com/ccp\",\"transport\":\"https\"}],\"expires_at\":\"2027-10-22T00:00:00Z\",\"identity\":\"key:ed25519:A6EHv_POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg\",\"issued_at\":\"2026-10-22T00:00:00Z\",\"manifest_digest\":\"sha256:abababababababababababababababababababababababababababababababab\",\"name\":\"Example Service\",\"policy_digest\":\"sha256:cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\",\"roles\":[\"provider\"],\"type\":\"ccp.identity.v1\",\"signature\":\"ed25519:fvTHiv20uyYQC5Jf9B3_ymqoBoLFL8kr70S7hin_Tu3kggynroj9cyWT7U4ShJz9PTHtcGXmAznfcLRinPLBBg\"}",
+      "now": "2026-10-22T12:00:00Z",
+      "expected": "manifest_mismatch",
+      "manifest_digest": "sha256:cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd"
+    },
+    {
+      "id": "id-008",
+      "name": "policy digest mismatch",
+      "document": "{\"ccp\":\"0.5-draft\",\"endpoints\":[{\"manifest\":\"https://example.com/manifest\",\"signal\":\"https://example.com/ccp\",\"transport\":\"https\"}],\"expires_at\":\"2027-10-22T00:00:00Z\",\"identity\":\"key:ed25519:A6EHv_POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg\",\"issued_at\":\"2026-10-22T00:00:00Z\",\"manifest_digest\":\"sha256:abababababababababababababababababababababababababababababababab\",\"name\":\"Example Service\",\"policy_digest\":\"sha256:cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\",\"roles\":[\"provider\"],\"type\":\"ccp.identity.v1\",\"signature\":\"ed25519:fvTHiv20uyYQC5Jf9B3_ymqoBoLFL8kr70S7hin_Tu3kggynroj9cyWT7U4ShJz9PTHtcGXmAznfcLRinPLBBg\"}",
+      "now": "2026-10-22T12:00:00Z",
+      "expected": "policy_mismatch",
+      "policy_digest": "sha256:abababababababababababababababababababababababababababababababab"
+    },
+    {
+      "id": "id-009",
+      "name": "unknown role",
+      "document": "{\"ccp\":\"0.5-draft\",\"endpoints\":[{\"manifest\":\"https://example.com/manifest\",\"signal\":\"https://example.com/ccp\",\"transport\":\"https\"}],\"expires_at\":\"2027-10-22T00:00:00Z\",\"identity\":\"key:ed25519:A6EHv_POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg\",\"issued_at\":\"2026-10-22T00:00:00Z\",\"manifest_digest\":\"sha256:abababababababababababababababababababababababababababababababab\",\"name\":\"Example Service\",\"policy_digest\":\"sha256:cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\",\"roles\":[\"provider\",\"admin\"],\"type\":\"ccp.identity.v1\",\"signature\":\"ed25519:P_jyRh682ytwkiZ1XpLdfXv24XTDU27Xqemwd8MGiCulL471F0JHn-M9OmLba1JVSgAo2Oqivm33yP0A5ynkCQ\"}",
+      "now": "2026-10-22T12:00:00Z",
+      "expected": "invalid_request"
+    },
+    {
+      "id": "id-010",
+      "name": "endpoint without a uri",
+      "document": "{\"ccp\":\"0.5-draft\",\"endpoints\":[{\"transport\":\"https\"}],\"expires_at\":\"2027-10-22T00:00:00Z\",\"identity\":\"key:ed25519:A6EHv_POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg\",\"issued_at\":\"2026-10-22T00:00:00Z\",\"manifest_digest\":\"sha256:abababababababababababababababababababababababababababababababab\",\"name\":\"Example Service\",\"policy_digest\":\"sha256:cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\",\"roles\":[\"provider\"],\"type\":\"ccp.identity.v1\",\"signature\":\"ed25519:j0URyjI_gLJYh3ocqAudIe5MEvNgyZRwZ_B68LVXYmBIppenhwtkQV7tYHKiPdOpQOoylwKAlJpXVARoFCuHAQ\"}",
+      "now": "2026-10-22T12:00:00Z",
+      "expected": "invalid_request"
+    },
+    {
+      "id": "id-011",
+      "name": "expiry before issue",
+      "document": "{\"ccp\":\"0.5-draft\",\"endpoints\":[{\"manifest\":\"https://example.com/manifest\",\"signal\":\"https://example.com/ccp\",\"transport\":\"https\"}],\"expires_at\":\"2026-10-22T00:00:00Z\",\"identity\":\"key:ed25519:A6EHv_POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg\",\"issued_at\":\"2027-10-22T00:00:00Z\",\"manifest_digest\":\"sha256:abababababababababababababababababababababababababababababababab\",\"name\":\"Example Service\",\"policy_digest\":\"sha256:cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\",\"roles\":[\"provider\"],\"type\":\"ccp.identity.v1\",\"signature\":\"ed25519:vBqA1fv-htJXeXevvMbNZ1sEQA2_7OxywA8lYVw0uL_emrcDddC3pz7_1Sp9f_9LWDobDYaQk1UtRUWgPjFoCQ\"}",
+      "now": "2026-10-22T12:00:00Z",
+      "expected": "invalid_request"
+    },
+    {
+      "id": "id-012",
+      "name": "wrong document type",
+      "document": "{\"ccp\":\"0.5-draft\",\"endpoints\":[{\"manifest\":\"https://example.com/manifest\",\"signal\":\"https://example.com/ccp\",\"transport\":\"https\"}],\"expires_at\":\"2027-10-22T00:00:00Z\",\"identity\":\"key:ed25519:A6EHv_POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg\",\"issued_at\":\"2026-10-22T00:00:00Z\",\"manifest_digest\":\"sha256:abababababababababababababababababababababababababababababababab\",\"name\":\"Example Service\",\"policy_digest\":\"sha256:cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\",\"roles\":[\"provider\"],\"type\":\"ccp.manifest.v1\",\"signature\":\"ed25519:Hm6iJaOx5CmLUeDDK9z56fupW52cSCVbxnr0f2kzaz_GLxpn7obmOMld0Yn8yNElMwhTDuIj8Dl83GXvgzL9Bg\"}",
+      "now": "2026-10-22T12:00:00Z",
+      "expected": "invalid_request"
+    },
+    {
+      "id": "id-013",
+      "name": "unsupported label",
+      "document": "{\"ccp\":\"0.6-draft\",\"endpoints\":[{\"manifest\":\"https://example.com/manifest\",\"signal\":\"https://example.com/ccp\",\"transport\":\"https\"}],\"expires_at\":\"2027-10-22T00:00:00Z\",\"identity\":\"key:ed25519:A6EHv_POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg\",\"issued_at\":\"2026-10-22T00:00:00Z\",\"manifest_digest\":\"sha256:abababababababababababababababababababababababababababababababab\",\"name\":\"Example Service\",\"policy_digest\":\"sha256:cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\",\"roles\":[\"provider\"],\"type\":\"ccp.identity.v1\",\"signature\":\"ed25519:SnLStFuRqKYIPTOTPgy5p3E1p1E35GSeRt5-2bUKWmul8kkfLL9v2PD26qgF_YsXBSHq2VabO_yXHdUY46fjDw\"}",
+      "now": "2026-10-22T12:00:00Z",
+      "expected": "invalid_request"
+    },
+    {
+      "id": "id-014",
+      "name": "identity key is not a key id",
+      "document": "{\"ccp\":\"0.5-draft\",\"endpoints\":[{\"manifest\":\"https://example.com/manifest\",\"signal\":\"https://example.com/ccp\",\"transport\":\"https\"}],\"expires_at\":\"2027-10-22T00:00:00Z\",\"identity\":\"key:rsa:abc\",\"issued_at\":\"2026-10-22T00:00:00Z\",\"manifest_digest\":\"sha256:abababababababababababababababababababababababababababababababab\",\"name\":\"Example Service\",\"policy_digest\":\"sha256:cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\",\"roles\":[\"provider\"],\"type\":\"ccp.identity.v1\",\"signature\":\"ed25519:1DjDCI57N7Iq3mW5-0Co0DZD0cF4IYXM_RQYYcb07AcTUYKWXULHnjBbbIxgjv6wjBIOzGodUwImbvBoycGHBQ\"}",
+      "now": "2026-10-22T12:00:00Z",
+      "expected": "invalid_request"
+    }
+  ],
+  "policies": [
+    {
+      "id": "pol-001",
+      "name": "read and disclose rules",
+      "document": "{\"ccp\":\"0.5-draft\",\"default\":\"confirm\",\"expires_at\":\"2027-01-01T00:00:00Z\",\"host\":\"key:ed25519:A6EHv_POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg\",\"issued_at\":\"2026-10-22T00:00:00Z\",\"rules\":[{\"confirmation\":\"none\",\"contacts\":[\"c-agent-1\"],\"expires_at\":\"2027-01-01T00:00:00Z\",\"id\":\"r-read\",\"intents\":[\"files.search\",\"calendar.read\"],\"limits\":{\"calls_per_hour\":60},\"risk\":\"read\"},{\"confirmation\":\"none\",\"destinations\":[\"wallet:acct-9\"],\"expires_at\":\"2027-01-01T00:00:00Z\",\"id\":\"r-pay\",\"intents\":[\"payment.address.resolve\"],\"requesters\":[\"key:ed25519:Kay64UG8yvCyLhqU000LxzYeUm0L_hLIl5S8kyKWbdc\"],\"risk\":\"disclose\"}],\"type\":\"ccp.admission-policy.v1\",\"version\":1,\"signature\":\"ed25519:kZEPhNrUCblYQoEI8EIGNa2N2thUmumt2fxc57ZfWlLdfYz4Lz_e8wuzD0xfnWbA40gwWS4ZlW4M7PA7Z855Aw\"}",
+      "now": "2026-10-22T12:00:00Z",
+      "expected": "valid"
+    },
+    {
+      "id": "pol-002",
+      "name": "default allow",
+      "document": "{\"ccp\":\"0.5-draft\",\"default\":\"allow\",\"expires_at\":\"2027-01-01T00:00:00Z\",\"host\":\"key:ed25519:A6EHv_POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg\",\"issued_at\":\"2026-10-22T00:00:00Z\",\"rules\":[{\"confirmation\":\"none\",\"contacts\":[\"c-agent-1\"],\"expires_at\":\"2027-01-01T00:00:00Z\",\"id\":\"r-read\",\"intents\":[\"files.search\",\"calendar.read\"],\"limits\":{\"calls_per_hour\":60},\"risk\":\"read\"},{\"confirmation\":\"none\",\"destinations\":[\"wallet:acct-9\"],\"expires_at\":\"2027-01-01T00:00:00Z\",\"id\":\"r-pay\",\"intents\":[\"payment.address.resolve\"],\"requesters\":[\"key:ed25519:Kay64UG8yvCyLhqU000LxzYeUm0L_hLIl5S8kyKWbdc\"],\"risk\":\"disclose\"}],\"type\":\"ccp.admission-policy.v1\",\"version\":1,\"signature\":\"ed25519:NbMoxXwJykZOTfoG79G6Cy_oqbIL4lPCpkxyaZvRx8DSRPKHSb2vjjPRZbSrlyxllA3a6QMDj8lFq1akpN81DA\"}",
+      "now": "2026-10-22T12:00:00Z",
+      "expected": "invalid_request"
+    },
+    {
+      "id": "pol-003",
+      "name": "rule names neither contacts nor requesters",
+      "document": "{\"ccp\":\"0.5-draft\",\"default\":\"confirm\",\"expires_at\":\"2027-01-01T00:00:00Z\",\"host\":\"key:ed25519:A6EHv_POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg\",\"issued_at\":\"2026-10-22T00:00:00Z\",\"rules\":[{\"confirmation\":\"none\",\"expires_at\":\"2027-01-01T00:00:00Z\",\"id\":\"r-read\",\"intents\":[\"files.search\",\"calendar.read\"],\"limits\":{\"calls_per_hour\":60},\"risk\":\"read\"}],\"type\":\"ccp.admission-policy.v1\",\"version\":1,\"signature\":\"ed25519:jht0bhPleUELTRaGxEu_aZYMg6JHKCb1xfDaZygeE0nvb0aQrI3IlVB7WVnSSMM9NNzFIw3ICetKkqc8ZpswCQ\"}",
+      "now": "2026-10-22T12:00:00Z",
+      "expected": "invalid_request"
+    },
+    {
+      "id": "pol-004",
+      "name": "write risk is not admittable",
+      "document": "{\"ccp\":\"0.5-draft\",\"default\":\"confirm\",\"expires_at\":\"2027-01-01T00:00:00Z\",\"host\":\"key:ed25519:A6EHv_POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg\",\"issued_at\":\"2026-10-22T00:00:00Z\",\"rules\":[{\"confirmation\":\"none\",\"contacts\":[\"c-agent-1\"],\"expires_at\":\"2027-01-01T00:00:00Z\",\"id\":\"r-read\",\"intents\":[\"files.search\",\"calendar.read\"],\"limits\":{\"calls_per_hour\":60},\"risk\":\"write\"}],\"type\":\"ccp.admission-policy.v1\",\"version\":1,\"signature\":\"ed25519:zC6uCbRiuvybUcrHSwSkePvxQXgkSxe4fCVdJpP-KBfCHEyVg_pDwWcAqSgH6heYb3POrCCz_8eB7CdPsrS9Cg\"}",
+      "now": "2026-10-22T12:00:00Z",
+      "expected": "invalid_request"
+    },
+    {
+      "id": "pol-005",
+      "name": "disclose without destinations",
+      "document": "{\"ccp\":\"0.5-draft\",\"default\":\"confirm\",\"expires_at\":\"2027-01-01T00:00:00Z\",\"host\":\"key:ed25519:A6EHv_POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg\",\"issued_at\":\"2026-10-22T00:00:00Z\",\"rules\":[{\"confirmation\":\"none\",\"contacts\":[\"c-agent-1\"],\"expires_at\":\"2027-01-01T00:00:00Z\",\"id\":\"r-read\",\"intents\":[\"files.search\",\"calendar.read\"],\"limits\":{\"calls_per_hour\":60},\"risk\":\"disclose\"}],\"type\":\"ccp.admission-policy.v1\",\"version\":1,\"signature\":\"ed25519:u5VBog7LB_LNJConeettFzuLSmOobG1gno4VuE0G9LZbIOSqV8kJPTdeKMB7XFwYtIXZ0VeLBc_n2tP87uL5DA\"}",
+      "now": "2026-10-22T12:00:00Z",
+      "expected": "invalid_request"
+    },
+    {
+      "id": "pol-006",
+      "name": "duplicate rule ids",
+      "document": "{\"ccp\":\"0.5-draft\",\"default\":\"confirm\",\"expires_at\":\"2027-01-01T00:00:00Z\",\"host\":\"key:ed25519:A6EHv_POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg\",\"issued_at\":\"2026-10-22T00:00:00Z\",\"rules\":[{\"confirmation\":\"none\",\"contacts\":[\"c-agent-1\"],\"expires_at\":\"2027-01-01T00:00:00Z\",\"id\":\"r-read\",\"intents\":[\"files.search\",\"calendar.read\"],\"limits\":{\"calls_per_hour\":60},\"risk\":\"read\"},{\"confirmation\":\"none\",\"contacts\":[\"c-agent-1\"],\"expires_at\":\"2027-01-01T00:00:00Z\",\"id\":\"r-read\",\"intents\":[\"files.search\",\"calendar.read\"],\"limits\":{\"calls_per_hour\":60},\"risk\":\"read\"}],\"type\":\"ccp.admission-policy.v1\",\"version\":1,\"signature\":\"ed25519:zDBC54IcLgt3W1TmzWTPd75f66LKORioRGGJWk0lAQnXZK-a-GBI4JdN_0IoJRqYr1nb1lr57JOcqYdKwiTJDA\"}",
+      "now": "2026-10-22T12:00:00Z",
+      "expected": "invalid_request"
+    },
+    {
+      "id": "pol-007",
+      "name": "rule outlives the policy",
+      "document": "{\"ccp\":\"0.5-draft\",\"default\":\"confirm\",\"expires_at\":\"2027-01-01T00:00:00Z\",\"host\":\"key:ed25519:A6EHv_POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg\",\"issued_at\":\"2026-10-22T00:00:00Z\",\"rules\":[{\"confirmation\":\"none\",\"contacts\":[\"c-agent-1\"],\"expires_at\":\"2028-01-01T00:00:00Z\",\"id\":\"r-read\",\"intents\":[\"files.search\",\"calendar.read\"],\"limits\":{\"calls_per_hour\":60},\"risk\":\"read\"}],\"type\":\"ccp.admission-policy.v1\",\"version\":1,\"signature\":\"ed25519:FZ_XGItQY9Hn6NSPlnj6s1H5DMbg_m5mOCsYqIf4NsXLwc262fLfF4wOTcCUO8iTa56mPyU0tF8FMgSQhVHgAg\"}",
+      "now": "2026-10-22T12:00:00Z",
+      "expected": "invalid_request"
+    },
+    {
+      "id": "pol-008",
+      "name": "expired policy",
+      "document": "{\"ccp\":\"0.5-draft\",\"default\":\"confirm\",\"expires_at\":\"2025-06-01T00:00:00Z\",\"host\":\"key:ed25519:A6EHv_POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg\",\"issued_at\":\"2025-01-01T00:00:00Z\",\"rules\":[{\"confirmation\":\"none\",\"contacts\":[\"c-agent-1\"],\"expires_at\":\"2025-06-01T00:00:00Z\",\"id\":\"r-read\",\"intents\":[\"files.search\",\"calendar.read\"],\"limits\":{\"calls_per_hour\":60},\"risk\":\"read\"}],\"type\":\"ccp.admission-policy.v1\",\"version\":1,\"signature\":\"ed25519:lMJWctUg7LWoUQQCHf6C68WMajQulYWRi2nRdX7L_XRNTxz_QlbTIWFrniqp2_jUQSuQIEdlS2UeYI4AyFTjBg\"}",
+      "now": "2026-10-22T12:00:00Z",
+      "expected": "policy_expired"
+    },
+    {
+      "id": "pol-009",
+      "name": "signature by another key",
+      "document": "{\"ccp\":\"0.5-draft\",\"default\":\"confirm\",\"expires_at\":\"2027-01-01T00:00:00Z\",\"host\":\"key:ed25519:A6EHv_POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg\",\"issued_at\":\"2026-10-22T00:00:00Z\",\"rules\":[{\"confirmation\":\"none\",\"contacts\":[\"c-agent-1\"],\"expires_at\":\"2027-01-01T00:00:00Z\",\"id\":\"r-read\",\"intents\":[\"files.search\",\"calendar.read\"],\"limits\":{\"calls_per_hour\":60},\"risk\":\"read\"},{\"confirmation\":\"none\",\"destinations\":[\"wallet:acct-9\"],\"expires_at\":\"2027-01-01T00:00:00Z\",\"id\":\"r-pay\",\"intents\":[\"payment.address.resolve\"],\"requesters\":[\"key:ed25519:Kay64UG8yvCyLhqU000LxzYeUm0L_hLIl5S8kyKWbdc\"],\"risk\":\"disclose\"}],\"type\":\"ccp.admission-policy.v1\",\"version\":1,\"signature\":\"ed25519:yBOxbmvQHP0fd72asWHYoYulxh9P3nlRBvNqioiDRzMUJ2elF8lJ8_5zT5DVShezqtB7ieFN8AXn5XzI7V3zAA\"}",
+      "now": "2026-10-22T12:00:00Z",
+      "expected": "unauthenticated"
+    },
+    {
+      "id": "pol-010",
+      "name": "host differs from the known identity",
+      "document": "{\"ccp\":\"0.5-draft\",\"default\":\"confirm\",\"expires_at\":\"2027-01-01T00:00:00Z\",\"host\":\"key:ed25519:A6EHv_POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg\",\"issued_at\":\"2026-10-22T00:00:00Z\",\"rules\":[{\"confirmation\":\"none\",\"contacts\":[\"c-agent-1\"],\"expires_at\":\"2027-01-01T00:00:00Z\",\"id\":\"r-read\",\"intents\":[\"files.search\",\"calendar.read\"],\"limits\":{\"calls_per_hour\":60},\"risk\":\"read\"},{\"confirmation\":\"none\",\"destinations\":[\"wallet:acct-9\"],\"expires_at\":\"2027-01-01T00:00:00Z\",\"id\":\"r-pay\",\"intents\":[\"payment.address.resolve\"],\"requesters\":[\"key:ed25519:Kay64UG8yvCyLhqU000LxzYeUm0L_hLIl5S8kyKWbdc\"],\"risk\":\"disclose\"}],\"type\":\"ccp.admission-policy.v1\",\"version\":1,\"signature\":\"ed25519:kZEPhNrUCblYQoEI8EIGNa2N2thUmumt2fxc57ZfWlLdfYz4Lz_e8wuzD0xfnWbA40gwWS4ZlW4M7PA7Z855Aw\"}",
+      "now": "2026-10-22T12:00:00Z",
+      "expected": "identity_changed",
+      "expected_host": "key:ed25519:JUO5L_EJVRFHatyDadtt3JM2ZaEZeN2hQE7hBmypVZ0"
+    },
+    {
+      "id": "pol-011",
+      "name": "confirmation must be none",
+      "document": "{\"ccp\":\"0.5-draft\",\"default\":\"confirm\",\"expires_at\":\"2027-01-01T00:00:00Z\",\"host\":\"key:ed25519:A6EHv_POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg\",\"issued_at\":\"2026-10-22T00:00:00Z\",\"rules\":[{\"confirmation\":\"per_action\",\"contacts\":[\"c-agent-1\"],\"expires_at\":\"2027-01-01T00:00:00Z\",\"id\":\"r-read\",\"intents\":[\"files.search\",\"calendar.read\"],\"limits\":{\"calls_per_hour\":60},\"risk\":\"read\"}],\"type\":\"ccp.admission-policy.v1\",\"version\":1,\"signature\":\"ed25519:U7Ct699iowbCas_U2O1eWsDU2RWMaLlx7tQTQ0DVoZxx9_QGWWSrO4h41tkDRCcpQTXdItMUzzXNzDt2BNp6Ag\"}",
+      "now": "2026-10-22T12:00:00Z",
+      "expected": "invalid_request"
+    },
+    {
+      "id": "pol-012",
+      "name": "short-lived rule inside a longer policy",
+      "document": "{\"ccp\":\"0.5-draft\",\"default\":\"confirm\",\"expires_at\":\"2028-01-01T00:00:00Z\",\"host\":\"key:ed25519:A6EHv_POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg\",\"issued_at\":\"2026-10-22T00:00:00Z\",\"rules\":[{\"confirmation\":\"none\",\"contacts\":[\"c-agent-1\"],\"expires_at\":\"2026-12-01T00:00:00Z\",\"id\":\"r-read\",\"intents\":[\"files.search\",\"calendar.read\"],\"limits\":{\"calls_per_hour\":60},\"risk\":\"read\"}],\"type\":\"ccp.admission-policy.v1\",\"version\":1,\"signature\":\"ed25519:Bmjjj8H62zI_TolbvoxybBqs2sdbPpn7GWozKpguiJ8XSRXGlPV0BaSe_bJ8uemLhcWLgDCG651GROOCZEtxDA\"}",
+      "now": "2026-10-22T12:00:00Z",
+      "expected": "valid"
+    },
+    {
+      "id": "pol-013",
+      "name": "default deny",
+      "document": "{\"ccp\":\"0.5-draft\",\"default\":\"deny\",\"expires_at\":\"2027-01-01T00:00:00Z\",\"host\":\"key:ed25519:A6EHv_POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg\",\"issued_at\":\"2026-10-22T00:00:00Z\",\"rules\":[{\"confirmation\":\"none\",\"contacts\":[\"c-agent-1\"],\"expires_at\":\"2027-01-01T00:00:00Z\",\"id\":\"r-read\",\"intents\":[\"files.search\",\"calendar.read\"],\"limits\":{\"calls_per_hour\":60},\"risk\":\"read\"},{\"confirmation\":\"none\",\"destinations\":[\"wallet:acct-9\"],\"expires_at\":\"2027-01-01T00:00:00Z\",\"id\":\"r-pay\",\"intents\":[\"payment.address.resolve\"],\"requesters\":[\"key:ed25519:Kay64UG8yvCyLhqU000LxzYeUm0L_hLIl5S8kyKWbdc\"],\"risk\":\"disclose\"}],\"type\":\"ccp.admission-policy.v1\",\"version\":1,\"signature\":\"ed25519:gKEEg7X0I1HVk1unPwdsVBUD-S5f44xugsZMN8UJvUk8bE_KYPZ4SQHuR-FGDTEmbj9HdMpS1xMSAVufuhR3CQ\"}",
+      "now": "2026-10-22T12:00:00Z",
+      "expected": "valid"
+    }
+  ],
+  "admissions": [
+    {
+      "id": "adm-001",
+      "name": "contact rule matches",
+      "policy": "{\"ccp\":\"0.5-draft\",\"default\":\"confirm\",\"expires_at\":\"2027-01-01T00:00:00Z\",\"host\":\"key:ed25519:A6EHv_POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg\",\"issued_at\":\"2026-10-22T00:00:00Z\",\"rules\":[{\"confirmation\":\"none\",\"contacts\":[\"c-agent-1\"],\"expires_at\":\"2027-01-01T00:00:00Z\",\"id\":\"r-read\",\"intents\":[\"files.search\",\"calendar.read\"],\"limits\":{\"calls_per_hour\":60},\"risk\":\"read\"},{\"confirmation\":\"none\",\"destinations\":[\"wallet:acct-9\"],\"expires_at\":\"2027-01-01T00:00:00Z\",\"id\":\"r-pay\",\"intents\":[\"payment.address.resolve\"],\"requesters\":[\"key:ed25519:Kay64UG8yvCyLhqU000LxzYeUm0L_hLIl5S8kyKWbdc\"],\"risk\":\"disclose\"}],\"type\":\"ccp.admission-policy.v1\",\"version\":1,\"signature\":\"ed25519:kZEPhNrUCblYQoEI8EIGNa2N2thUmumt2fxc57ZfWlLdfYz4Lz_e8wuzD0xfnWbA40gwWS4ZlW4M7PA7Z855Aw\"}",
+      "verify_now": "2026-10-22T12:00:00Z",
+      "request": {
+        "requester_key": "key:ed25519:Kay64UG8yvCyLhqU000LxzYeUm0L_hLIl5S8kyKWbdc",
+        "contact_id": "c-agent-1",
+        "intent": "files.search",
+        "risk": "read",
+        "now": "2026-10-22T12:00:00Z"
+      },
+      "expected": "allow",
+      "expected_rule": "r-read"
+    },
+    {
+      "id": "adm-002",
+      "name": "unknown contact falls back to the default",
+      "policy": "{\"ccp\":\"0.5-draft\",\"default\":\"confirm\",\"expires_at\":\"2027-01-01T00:00:00Z\",\"host\":\"key:ed25519:A6EHv_POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg\",\"issued_at\":\"2026-10-22T00:00:00Z\",\"rules\":[{\"confirmation\":\"none\",\"contacts\":[\"c-agent-1\"],\"expires_at\":\"2027-01-01T00:00:00Z\",\"id\":\"r-read\",\"intents\":[\"files.search\",\"calendar.read\"],\"limits\":{\"calls_per_hour\":60},\"risk\":\"read\"},{\"confirmation\":\"none\",\"destinations\":[\"wallet:acct-9\"],\"expires_at\":\"2027-01-01T00:00:00Z\",\"id\":\"r-pay\",\"intents\":[\"payment.address.resolve\"],\"requesters\":[\"key:ed25519:Kay64UG8yvCyLhqU000LxzYeUm0L_hLIl5S8kyKWbdc\"],\"risk\":\"disclose\"}],\"type\":\"ccp.admission-policy.v1\",\"version\":1,\"signature\":\"ed25519:kZEPhNrUCblYQoEI8EIGNa2N2thUmumt2fxc57ZfWlLdfYz4Lz_e8wuzD0xfnWbA40gwWS4ZlW4M7PA7Z855Aw\"}",
+      "verify_now": "2026-10-22T12:00:00Z",
+      "request": {
+        "requester_key": "key:ed25519:Kay64UG8yvCyLhqU000LxzYeUm0L_hLIl5S8kyKWbdc",
+        "contact_id": "c-stranger",
+        "intent": "files.search",
+        "risk": "read",
+        "now": "2026-10-22T12:00:00Z"
+      },
+      "expected": "confirm"
+    },
+    {
+      "id": "adm-003",
+      "name": "intent not listed falls back",
+      "policy": "{\"ccp\":\"0.5-draft\",\"default\":\"confirm\",\"expires_at\":\"2027-01-01T00:00:00Z\",\"host\":\"key:ed25519:A6EHv_POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg\",\"issued_at\":\"2026-10-22T00:00:00Z\",\"rules\":[{\"confirmation\":\"none\",\"contacts\":[\"c-agent-1\"],\"expires_at\":\"2027-01-01T00:00:00Z\",\"id\":\"r-read\",\"intents\":[\"files.search\",\"calendar.read\"],\"limits\":{\"calls_per_hour\":60},\"risk\":\"read\"},{\"confirmation\":\"none\",\"destinations\":[\"wallet:acct-9\"],\"expires_at\":\"2027-01-01T00:00:00Z\",\"id\":\"r-pay\",\"intents\":[\"payment.address.resolve\"],\"requesters\":[\"key:ed25519:Kay64UG8yvCyLhqU000LxzYeUm0L_hLIl5S8kyKWbdc\"],\"risk\":\"disclose\"}],\"type\":\"ccp.admission-policy.v1\",\"version\":1,\"signature\":\"ed25519:kZEPhNrUCblYQoEI8EIGNa2N2thUmumt2fxc57ZfWlLdfYz4Lz_e8wuzD0xfnWbA40gwWS4ZlW4M7PA7Z855Aw\"}",
+      "verify_now": "2026-10-22T12:00:00Z",
+      "request": {
+        "requester_key": "key:ed25519:Kay64UG8yvCyLhqU000LxzYeUm0L_hLIl5S8kyKWbdc",
+        "contact_id": "c-agent-1",
+        "intent": "contacts.read",
+        "risk": "read",
+        "now": "2026-10-22T12:00:00Z"
+      },
+      "expected": "confirm"
+    },
+    {
+      "id": "adm-004",
+      "name": "write risk is never admitted",
+      "policy": "{\"ccp\":\"0.5-draft\",\"default\":\"confirm\",\"expires_at\":\"2027-01-01T00:00:00Z\",\"host\":\"key:ed25519:A6EHv_POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg\",\"issued_at\":\"2026-10-22T00:00:00Z\",\"rules\":[{\"confirmation\":\"none\",\"contacts\":[\"c-agent-1\"],\"expires_at\":\"2027-01-01T00:00:00Z\",\"id\":\"r-read\",\"intents\":[\"files.search\",\"calendar.read\"],\"limits\":{\"calls_per_hour\":60},\"risk\":\"read\"},{\"confirmation\":\"none\",\"destinations\":[\"wallet:acct-9\"],\"expires_at\":\"2027-01-01T00:00:00Z\",\"id\":\"r-pay\",\"intents\":[\"payment.address.resolve\"],\"requesters\":[\"key:ed25519:Kay64UG8yvCyLhqU000LxzYeUm0L_hLIl5S8kyKWbdc\"],\"risk\":\"disclose\"}],\"type\":\"ccp.admission-policy.v1\",\"version\":1,\"signature\":\"ed25519:kZEPhNrUCblYQoEI8EIGNa2N2thUmumt2fxc57ZfWlLdfYz4Lz_e8wuzD0xfnWbA40gwWS4ZlW4M7PA7Z855Aw\"}",
+      "verify_now": "2026-10-22T12:00:00Z",
+      "request": {
+        "requester_key": "key:ed25519:Kay64UG8yvCyLhqU000LxzYeUm0L_hLIl5S8kyKWbdc",
+        "contact_id": "c-agent-1",
+        "intent": "files.search",
+        "risk": "write",
+        "now": "2026-10-22T12:00:00Z"
+      },
+      "expected": "deny"
+    },
+    {
+      "id": "adm-005",
+      "name": "expired rule is skipped",
+      "policy": "{\"ccp\":\"0.5-draft\",\"default\":\"confirm\",\"expires_at\":\"2028-01-01T00:00:00Z\",\"host\":\"key:ed25519:A6EHv_POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg\",\"issued_at\":\"2026-10-22T00:00:00Z\",\"rules\":[{\"confirmation\":\"none\",\"contacts\":[\"c-agent-1\"],\"expires_at\":\"2026-12-01T00:00:00Z\",\"id\":\"r-read\",\"intents\":[\"files.search\",\"calendar.read\"],\"limits\":{\"calls_per_hour\":60},\"risk\":\"read\"}],\"type\":\"ccp.admission-policy.v1\",\"version\":1,\"signature\":\"ed25519:Bmjjj8H62zI_TolbvoxybBqs2sdbPpn7GWozKpguiJ8XSRXGlPV0BaSe_bJ8uemLhcWLgDCG651GROOCZEtxDA\"}",
+      "verify_now": "2026-10-22T12:00:00Z",
+      "request": {
+        "requester_key": "key:ed25519:Kay64UG8yvCyLhqU000LxzYeUm0L_hLIl5S8kyKWbdc",
+        "contact_id": "c-agent-1",
+        "intent": "files.search",
+        "risk": "read",
+        "now": "2026-12-15T00:00:00Z"
+      },
+      "expected": "confirm"
+    },
+    {
+      "id": "adm-006",
+      "name": "requester rule matches by key",
+      "policy": "{\"ccp\":\"0.5-draft\",\"default\":\"confirm\",\"expires_at\":\"2027-01-01T00:00:00Z\",\"host\":\"key:ed25519:A6EHv_POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg\",\"issued_at\":\"2026-10-22T00:00:00Z\",\"rules\":[{\"confirmation\":\"none\",\"contacts\":[\"c-agent-1\"],\"expires_at\":\"2027-01-01T00:00:00Z\",\"id\":\"r-read\",\"intents\":[\"files.search\",\"calendar.read\"],\"limits\":{\"calls_per_hour\":60},\"risk\":\"read\"},{\"confirmation\":\"none\",\"destinations\":[\"wallet:acct-9\"],\"expires_at\":\"2027-01-01T00:00:00Z\",\"id\":\"r-pay\",\"intents\":[\"payment.address.resolve\"],\"requesters\":[\"key:ed25519:Kay64UG8yvCyLhqU000LxzYeUm0L_hLIl5S8kyKWbdc\"],\"risk\":\"disclose\"}],\"type\":\"ccp.admission-policy.v1\",\"version\":1,\"signature\":\"ed25519:kZEPhNrUCblYQoEI8EIGNa2N2thUmumt2fxc57ZfWlLdfYz4Lz_e8wuzD0xfnWbA40gwWS4ZlW4M7PA7Z855Aw\"}",
+      "verify_now": "2026-10-22T12:00:00Z",
+      "request": {
+        "requester_key": "key:ed25519:Kay64UG8yvCyLhqU000LxzYeUm0L_hLIl5S8kyKWbdc",
+        "contact_id": "c-anyone",
+        "intent": "payment.address.resolve",
+        "risk": "disclose",
+        "destination": "wallet:acct-9",
+        "now": "2026-10-22T12:00:00Z"
+      },
+      "expected": "allow",
+      "expected_rule": "r-pay"
+    },
+    {
+      "id": "adm-007",
+      "name": "requester rule rejects another key",
+      "policy": "{\"ccp\":\"0.5-draft\",\"default\":\"confirm\",\"expires_at\":\"2027-01-01T00:00:00Z\",\"host\":\"key:ed25519:A6EHv_POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg\",\"issued_at\":\"2026-10-22T00:00:00Z\",\"rules\":[{\"confirmation\":\"none\",\"contacts\":[\"c-agent-1\"],\"expires_at\":\"2027-01-01T00:00:00Z\",\"id\":\"r-read\",\"intents\":[\"files.search\",\"calendar.read\"],\"limits\":{\"calls_per_hour\":60},\"risk\":\"read\"},{\"confirmation\":\"none\",\"destinations\":[\"wallet:acct-9\"],\"expires_at\":\"2027-01-01T00:00:00Z\",\"id\":\"r-pay\",\"intents\":[\"payment.address.resolve\"],\"requesters\":[\"key:ed25519:Kay64UG8yvCyLhqU000LxzYeUm0L_hLIl5S8kyKWbdc\"],\"risk\":\"disclose\"}],\"type\":\"ccp.admission-policy.v1\",\"version\":1,\"signature\":\"ed25519:kZEPhNrUCblYQoEI8EIGNa2N2thUmumt2fxc57ZfWlLdfYz4Lz_e8wuzD0xfnWbA40gwWS4ZlW4M7PA7Z855Aw\"}",
+      "verify_now": "2026-10-22T12:00:00Z",
+      "request": {
+        "requester_key": "key:ed25519:JUO5L_EJVRFHatyDadtt3JM2ZaEZeN2hQE7hBmypVZ0",
+        "contact_id": "c-anyone",
+        "intent": "payment.address.resolve",
+        "risk": "disclose",
+        "destination": "wallet:acct-9",
+        "now": "2026-10-22T12:00:00Z"
+      },
+      "expected": "confirm"
+    },
+    {
+      "id": "adm-008",
+      "name": "unpinned destination is not admitted",
+      "policy": "{\"ccp\":\"0.5-draft\",\"default\":\"confirm\",\"expires_at\":\"2027-01-01T00:00:00Z\",\"host\":\"key:ed25519:A6EHv_POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg\",\"issued_at\":\"2026-10-22T00:00:00Z\",\"rules\":[{\"confirmation\":\"none\",\"contacts\":[\"c-agent-1\"],\"expires_at\":\"2027-01-01T00:00:00Z\",\"id\":\"r-read\",\"intents\":[\"files.search\",\"calendar.read\"],\"limits\":{\"calls_per_hour\":60},\"risk\":\"read\"},{\"confirmation\":\"none\",\"destinations\":[\"wallet:acct-9\"],\"expires_at\":\"2027-01-01T00:00:00Z\",\"id\":\"r-pay\",\"intents\":[\"payment.address.resolve\"],\"requesters\":[\"key:ed25519:Kay64UG8yvCyLhqU000LxzYeUm0L_hLIl5S8kyKWbdc\"],\"risk\":\"disclose\"}],\"type\":\"ccp.admission-policy.v1\",\"version\":1,\"signature\":\"ed25519:kZEPhNrUCblYQoEI8EIGNa2N2thUmumt2fxc57ZfWlLdfYz4Lz_e8wuzD0xfnWbA40gwWS4ZlW4M7PA7Z855Aw\"}",
+      "verify_now": "2026-10-22T12:00:00Z",
+      "request": {
+        "requester_key": "key:ed25519:Kay64UG8yvCyLhqU000LxzYeUm0L_hLIl5S8kyKWbdc",
+        "contact_id": "c-anyone",
+        "intent": "payment.address.resolve",
+        "risk": "disclose",
+        "destination": "wallet:acct-1",
+        "now": "2026-10-22T12:00:00Z"
+      },
+      "expected": "confirm"
+    },
+    {
+      "id": "adm-009",
+      "name": "default deny refuses the fallback",
+      "policy": "{\"ccp\":\"0.5-draft\",\"default\":\"deny\",\"expires_at\":\"2027-01-01T00:00:00Z\",\"host\":\"key:ed25519:A6EHv_POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg\",\"issued_at\":\"2026-10-22T00:00:00Z\",\"rules\":[{\"confirmation\":\"none\",\"contacts\":[\"c-agent-1\"],\"expires_at\":\"2027-01-01T00:00:00Z\",\"id\":\"r-read\",\"intents\":[\"files.search\",\"calendar.read\"],\"limits\":{\"calls_per_hour\":60},\"risk\":\"read\"},{\"confirmation\":\"none\",\"destinations\":[\"wallet:acct-9\"],\"expires_at\":\"2027-01-01T00:00:00Z\",\"id\":\"r-pay\",\"intents\":[\"payment.address.resolve\"],\"requesters\":[\"key:ed25519:Kay64UG8yvCyLhqU000LxzYeUm0L_hLIl5S8kyKWbdc\"],\"risk\":\"disclose\"}],\"type\":\"ccp.admission-policy.v1\",\"version\":1,\"signature\":\"ed25519:gKEEg7X0I1HVk1unPwdsVBUD-S5f44xugsZMN8UJvUk8bE_KYPZ4SQHuR-FGDTEmbj9HdMpS1xMSAVufuhR3CQ\"}",
+      "verify_now": "2026-10-22T12:00:00Z",
+      "request": {
+        "requester_key": "key:ed25519:Kay64UG8yvCyLhqU000LxzYeUm0L_hLIl5S8kyKWbdc",
+        "contact_id": "c-stranger",
+        "intent": "files.search",
+        "risk": "read",
+        "now": "2026-10-22T12:00:00Z"
+      },
+      "expected": "deny"
+    },
+    {
+      "id": "adm-010",
+      "name": "policy expired at evaluation time",
+      "policy": "{\"ccp\":\"0.5-draft\",\"default\":\"confirm\",\"expires_at\":\"2027-01-01T00:00:00Z\",\"host\":\"key:ed25519:A6EHv_POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg\",\"issued_at\":\"2026-10-22T00:00:00Z\",\"rules\":[{\"confirmation\":\"none\",\"contacts\":[\"c-agent-1\"],\"expires_at\":\"2027-01-01T00:00:00Z\",\"id\":\"r-read\",\"intents\":[\"files.search\",\"calendar.read\"],\"limits\":{\"calls_per_hour\":60},\"risk\":\"read\"},{\"confirmation\":\"none\",\"destinations\":[\"wallet:acct-9\"],\"expires_at\":\"2027-01-01T00:00:00Z\",\"id\":\"r-pay\",\"intents\":[\"payment.address.resolve\"],\"requesters\":[\"key:ed25519:Kay64UG8yvCyLhqU000LxzYeUm0L_hLIl5S8kyKWbdc\"],\"risk\":\"disclose\"}],\"type\":\"ccp.admission-policy.v1\",\"version\":1,\"signature\":\"ed25519:kZEPhNrUCblYQoEI8EIGNa2N2thUmumt2fxc57ZfWlLdfYz4Lz_e8wuzD0xfnWbA40gwWS4ZlW4M7PA7Z855Aw\"}",
+      "verify_now": "2026-10-22T12:00:00Z",
+      "request": {
+        "requester_key": "key:ed25519:Kay64UG8yvCyLhqU000LxzYeUm0L_hLIl5S8kyKWbdc",
+        "contact_id": "c-agent-1",
+        "intent": "files.search",
+        "risk": "read",
+        "now": "2027-06-01T00:00:00Z"
+      },
+      "expected": "deny"
+    },
+    {
+      "id": "adm-011",
+      "name": "a revoked grant is not re-created",
+      "policy": "{\"ccp\":\"0.5-draft\",\"default\":\"confirm\",\"expires_at\":\"2027-01-01T00:00:00Z\",\"host\":\"key:ed25519:A6EHv_POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg\",\"issued_at\":\"2026-10-22T00:00:00Z\",\"rules\":[{\"confirmation\":\"none\",\"contacts\":[\"c-agent-1\"],\"expires_at\":\"2027-01-01T00:00:00Z\",\"id\":\"r-read\",\"intents\":[\"files.search\",\"calendar.read\"],\"limits\":{\"calls_per_hour\":60},\"risk\":\"read\"},{\"confirmation\":\"none\",\"destinations\":[\"wallet:acct-9\"],\"expires_at\":\"2027-01-01T00:00:00Z\",\"id\":\"r-pay\",\"intents\":[\"payment.address.resolve\"],\"requesters\":[\"key:ed25519:Kay64UG8yvCyLhqU000LxzYeUm0L_hLIl5S8kyKWbdc\"],\"risk\":\"disclose\"}],\"type\":\"ccp.admission-policy.v1\",\"version\":1,\"signature\":\"ed25519:kZEPhNrUCblYQoEI8EIGNa2N2thUmumt2fxc57ZfWlLdfYz4Lz_e8wuzD0xfnWbA40gwWS4ZlW4M7PA7Z855Aw\"}",
+      "verify_now": "2026-10-22T12:00:00Z",
+      "request": {
+        "requester_key": "key:ed25519:Kay64UG8yvCyLhqU000LxzYeUm0L_hLIl5S8kyKWbdc",
+        "contact_id": "c-agent-1",
+        "intent": "files.search",
+        "risk": "read",
+        "now": "2026-10-22T12:00:00Z"
+      },
+      "expected": "deny",
+      "expected_rule": "r-read",
+      "revoked": [
+        "pg-dc86a38f36a66dac39bbaedc14d66c3a"
+      ],
+      "expected_reason": "grant_revoked"
+    },
+    {
+      "id": "adm-012",
+      "name": "revocation is scoped to one rule",
+      "policy": "{\"ccp\":\"0.5-draft\",\"default\":\"confirm\",\"expires_at\":\"2027-01-01T00:00:00Z\",\"host\":\"key:ed25519:A6EHv_POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg\",\"issued_at\":\"2026-10-22T00:00:00Z\",\"rules\":[{\"confirmation\":\"none\",\"contacts\":[\"c-agent-1\"],\"expires_at\":\"2027-01-01T00:00:00Z\",\"id\":\"r-read\",\"intents\":[\"files.search\",\"calendar.read\"],\"limits\":{\"calls_per_hour\":60},\"risk\":\"read\"},{\"confirmation\":\"none\",\"destinations\":[\"wallet:acct-9\"],\"expires_at\":\"2027-01-01T00:00:00Z\",\"id\":\"r-pay\",\"intents\":[\"payment.address.resolve\"],\"requesters\":[\"key:ed25519:Kay64UG8yvCyLhqU000LxzYeUm0L_hLIl5S8kyKWbdc\"],\"risk\":\"disclose\"}],\"type\":\"ccp.admission-policy.v1\",\"version\":1,\"signature\":\"ed25519:kZEPhNrUCblYQoEI8EIGNa2N2thUmumt2fxc57ZfWlLdfYz4Lz_e8wuzD0xfnWbA40gwWS4ZlW4M7PA7Z855Aw\"}",
+      "verify_now": "2026-10-22T12:00:00Z",
+      "request": {
+        "requester_key": "key:ed25519:Kay64UG8yvCyLhqU000LxzYeUm0L_hLIl5S8kyKWbdc",
+        "contact_id": "c-anyone",
+        "intent": "payment.address.resolve",
+        "risk": "disclose",
+        "destination": "wallet:acct-9",
+        "now": "2026-10-22T12:00:00Z"
+      },
+      "expected": "allow",
+      "expected_rule": "r-pay",
+      "revoked": [
+        "pg-106c51e2820c87f40331b4784762ab0f"
+      ]
+    }
+  ]
+}

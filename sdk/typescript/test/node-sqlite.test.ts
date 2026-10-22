@@ -208,6 +208,34 @@ describe("Runtime over SQLite", () => {
     }
   });
 
+  it("persists a revocation across reopen", async () => {
+    const directory = mkdtempSync(join(tmpdir(), "ccp-ts-sqlite-"));
+    const path = join(directory, "ccp.db");
+    const world = buildWorld();
+    try {
+      const first = new SqliteStores(path);
+      first.grants.add(world.grant);
+      first.manifests.add(world.manifest);
+      const runtime = runtimeFor(first);
+      const revoked = await runtime.revokeGrant("g-1", "user asked");
+      expect(revoked.state).toBe("revoked");
+      first.close();
+
+      const reopened = new SqliteStores(path);
+      try {
+        expect(reopened.grants.get("g-1")?.state).toBe("revoked");
+        const runtime2 = runtimeFor(reopened);
+        expect(
+          (await runtime2.submit(signalFor(world), REQUESTER_PUBLIC)).error
+        ).toBe("grant_revoked");
+      } finally {
+        reopened.close();
+      }
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
   it("persists a pending confirmation across reopen", async () => {
     const directory = mkdtempSync(join(tmpdir(), "ccp-ts-sqlite-"));
     const path = join(directory, "ccp.db");

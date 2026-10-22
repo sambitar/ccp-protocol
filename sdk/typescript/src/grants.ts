@@ -44,6 +44,12 @@ export interface CreateGrantOptions {
   expiresAt: string;
   state?: GrantState;
   stateReason?: string | null;
+  /**
+   * Rule id that admitted this grant under an admission policy (§25.8.3).
+   * Suppressing per-action confirmation requires this, because the policy is
+   * the consumer's explicit automation decision (§9.5, §26.2).
+   */
+  admittedBy?: string;
 }
 
 const CONFIRMATION_POLICIES = new Set<string>(["none", "per_action"]);
@@ -105,7 +111,8 @@ export function createGrant(options: CreateGrantOptions): Grant {
   const confirmation = resolveConfirmation(
     intents,
     definitions,
-    options.confirmation
+    options.confirmation,
+    options.admittedBy
   );
   const capabilities = resolveCapabilities(definitions, options.capabilities);
   const placement = resolvePlacement(definitions, options.placement);
@@ -174,7 +181,8 @@ function resolveLimits(
 function resolveConfirmation(
   intents: string[],
   definitions: any[],
-  requested: Record<string, ConfirmationPolicy> | undefined
+  requested: Record<string, ConfirmationPolicy> | undefined,
+  admittedBy: string | undefined
 ): Record<string, string> {
   const overrides = requested ?? {};
   for (const intent of Object.keys(overrides)) {
@@ -204,7 +212,7 @@ function resolveConfirmation(
         `unknown confirmation policy: ${override}`
       );
     }
-    if (base === "per_action" && override === "none") {
+    if (base === "per_action" && override === "none" && admittedBy === undefined) {
       throw new CcpError(
         "invalid_request",
         `confirmation for ${intent} cannot be relaxed to none`

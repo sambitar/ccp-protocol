@@ -7,6 +7,7 @@ export * from "./schema.js";
 export * from "./decision.js";
 export * from "./state-machine.js";
 export * from "./signing.js";
+export * from "./identity.js";
 export * from "./errors.js";
 export * from "./requester.js";
 export * from "./consumer.js";

@@ -181,6 +181,62 @@ Provider descriptions are labelled untrusted, results are returned as JSON
 data, and confirmation is the host's decision. Install with
 `pip install 'ccp-protocol[mcp]'`. See `examples/agent_mcp/`.
 
+## Identity and admission (§25.8)
+
+Publish a signed identity document, verify one for a known contact, and
+let a reviewed policy answer matching requests without a click.
+
+```python
+from ccp import (
+    AdmissionRequest, build_admission_policy, build_identity_document,
+    verify_admission_policy, verify_identity_document,
+)
+
+identity = build_identity_document(
+    {
+        "name": "Example Service",
+        "manifest_digest": manifest.digest,
+        "issued_at": "2026-10-22T00:00:00Z",
+        "expires_at": "2027-10-22T00:00:00Z",
+    },
+    signing_key,
+)
+
+peer = verify_identity_document(
+    identity, expected_identity=known_contact_key,
+    manifest_digest=manifest.digest,
+)
+
+policy = verify_admission_policy(
+    build_admission_policy(
+        {"version": 1, "default": "confirm", "rules": rules,
+         "issued_at": issued_at, "expires_at": expires_at},
+        host_key,
+    ),
+    expected_host=host_key.key_id,
+)
+
+outcome = runtime.admit_request(
+    policy,
+    AdmissionRequest(
+        requester_key=requester.key_id,
+        contact_id="c-1",
+        intent="files.search",
+        risk="read",
+        now="2026-10-22T12:00:00Z",
+    ),
+    manifest,
+)
+# outcome.result.decision is allow | confirm | deny; outcome.grant is set on allow.
+```
+
+Accepting an invitation creates a contact, never a grant. `default` must
+be `confirm` or `deny`, and only `read`/`disclose` intents can be
+admitted. Policy grants use a deterministic id, so a revocation is not
+undone by the next matching request. See
+[`docs/guides/identity.md`](../../docs/guides/identity.md) and
+[`docs/consistency-audit.md`](../../docs/consistency-audit.md).
+
 ## Durable stores
 
 `Runtime` accepts any object implementing the store contracts in

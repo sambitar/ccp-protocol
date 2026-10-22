@@ -8,7 +8,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 SDK_DIR = os.path.dirname(HERE)
 sys.path.insert(0, SDK_DIR)
 
-from ccp import SigningKey  # noqa: E402
+from ccp import CCPError, Grant, SigningKey  # noqa: E402
 from world import STORE, build_world, signal_for  # noqa: E402
 
 
@@ -118,6 +118,76 @@ class RuntimeTests(unittest.TestCase):
         world["grant"].revoke()
         decision = world["runtime"].confirm(first.pending_id, True)
         self.assertEqual(decision.error, "grant_revoked")
+
+    def test_revoke_grant(self):
+        world = build_world()
+        runtime = world["runtime"]
+        revoked = runtime.revoke_grant("g-1", "user asked")
+        self.assertEqual(revoked.state, "revoked")
+        self.assertEqual(revoked.state_reason, "user asked")
+        self.assertEqual(runtime.grants.get("g-1").state, "revoked")
+        self.assertEqual(self.submit(world, signal_for(world)).error,
+                         "grant_revoked")
+        events = [event["event"] for event in runtime.audit.events()]
+        self.assertIn("revoked", events)
+
+    def test_revoke_unknown_grant(self):
+        world = build_world()
+        with self.assertRaises(CCPError) as caught:
+            world["runtime"].revoke_grant("missing")
+        self.assertEqual(caught.exception.code, "no_matching_grant")
+
+    def test_revocation_invalidates_open_confirmation(self):
+        world = build_world(confirmation="per_action")
+        runtime = world["runtime"]
+        first = self.submit(world, signal_for(world, request_id="req-a"))
+        runtime.revoke_grant("g-1")
+        decision = runtime.confirm(first.pending_id, True)
+        self.assertEqual(decision.error, "grant_revoked")
+
+    def test_pause_and_resume_keep_limits(self):
+        world = build_world()
+        runtime = world["runtime"]
+        self.assertTrue(self.submit(world, signal_for(world, request_id="r1")).authorized)
+
+        runtime.pause_grant("g-1", "temporary stop")
+        paused = self.submit(world, signal_for(world, request_id="r2"))
+        self.assertEqual(paused.error, "grant_paused")
+        self.assertEqual(paused.detail, "temporary stop")
+
+        self.assertEqual(runtime.resume_grant("g-1").state, "active")
+        self.assertTrue(self.submit(world, signal_for(world, request_id="r3")).authorized)
+        self.assertEqual(runtime.limits.counters("g-1"), {"calls_per_hour": 2})
+
+    def test_suspend_exposes_the_reason(self):
+        world = build_world()
+        runtime = world["runtime"]
+        runtime.suspend_grant("g-1", "requester key changed")
+        decision = self.submit(world, signal_for(world))
+        self.assertEqual(decision.error, "grant_suspended")
+        self.assertEqual(decision.detail, "requester key changed")
+
+    def test_never_resumes_a_revoked_or_expired_grant(self):
+        world = build_world()
+        runtime = world["runtime"]
+        runtime.revoke_grant("g-1")
+        with self.assertRaises(CCPError) as caught:
+            runtime.resume_grant("g-1")
+        self.assertEqual(caught.exception.code, "grant_revoked")
+
+        expired = build_world(expires_at="2026-10-22T11:00:00Z")
+        expired["runtime"].pause_grant("g-1")
+        with self.assertRaises(CCPError) as caught:
+            expired["runtime"].resume_grant("g-1")
+        self.assertEqual(caught.exception.code, "grant_expired")
+
+    def test_suspend_contact(self):
+        world = build_world()
+        runtime = world["runtime"]
+        runtime.grants.add(Grant(**dict(
+            world["grant"].to_dict(), id="g-2")))
+        self.assertEqual(runtime.suspend_contact("c-1", "identity review"), 2)
+        self.assertEqual(runtime.grants.get("g-2").state, "suspended")
 
 
 if __name__ == "__main__":

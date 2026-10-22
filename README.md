@@ -14,21 +14,23 @@ never carry executable code.
 
 - **Specification:** [`CCP_Working_Draft_v0.5.md`](CCP_Working_Draft_v0.5.md)
   (working draft; not final)
-- **Status:** reference implementations. Not security-audited, and not yet
-  published to package registries.
+- **Status:** reference implementations at 0.5.0, published to npm
+  (`ccp-core`), PyPI (`ccp-protocol`), and crates.io (`ccp-kernel`). Not
+  security-audited.
 
 ## Repository map
 
 | Path | Contents |
 | --- | --- |
 | `CCP_Working_Draft_v0.5.md` | The protocol specification |
-| `test-vectors/` | Frozen conformance vectors (v1) and the adversarial v2 set |
+| `test-vectors/` | Frozen conformance vectors: v1 base, v2 adversarial, v3 dual-label, v4 identity and admission |
 | `kernel/` | Rust kernel with a C ABI and WASM build |
 | `sdk/typescript/` | `ccp-core` TypeScript SDK and framework adapters |
 | `sdk/python/` | `ccp-protocol` Python SDK and FastAPI/MCP adapters |
 | `bindings/` | Go, JS, Kotlin, and Swift bindings over the kernel |
 | `conformance/` | Cross-language conformance and interop harness |
-| `docs/guides/` | Operational guides (persistence, transport, namespaces, host catalogue, quickstarts) |
+| `docs/guides/` | Operational guides (persistence, transport, namespaces, identity, host catalogue, quickstarts) |
+| `docs/consistency-audit.md` | Principle-to-path audit of every authority mechanism |
 | `docs/plans/` | Phased build plans |
 | `phase4/`, `phase4-confirm/` | Independent-implementation reports |
 
@@ -95,7 +97,10 @@ following are left to the application or deferred to later profiles:
 
 - transport and channel binding (§13, §25.4) — a proposed HTTP binding is
   in [`docs/guides/transport.md`](docs/guides/transport.md);
-- identity bootstrap and trust (§4.2, a non-goal);
+- identity documents, introduction, and admission policy (§25.8) — the wire
+  format and verification sequence are fixed; see
+  [`docs/guides/identity.md`](docs/guides/identity.md);
+- trust decisions, contact directories, and key rotation (§7.3, §25.8.4);
 - side-effecting and networked intents (§25.6, §26.4);
 - remote execution and data-egress enforcement (§26.5);
 - a discovery registry and governance (§19.3, §26.8).
