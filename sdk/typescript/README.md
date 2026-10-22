@@ -1,8 +1,8 @@
 # ccp-core — CCP TypeScript SDK
 
 The TypeScript implementation of the Capability Contacts Protocol (draft
-v0.4), shaped by role: **Requester**, **Consumer**, **Runtime**, **Agent**.
-It reproduces the frozen v1, v2, and v3 vectors in `../../test-vectors/`.
+v0.5), shaped by role: **Requester**, **Consumer**, **Runtime**, **Agent**.
+It reproduces the frozen v1 through v5 vectors in `../../test-vectors/`.
 
 Runs in browsers and Node (no Node-only APIs in `src/`).
 

@@ -39,6 +39,8 @@ jobs:
         run: cargo build --release --target wasm32-unknown-unknown --manifest-path kernel/Cargo.toml
       - name: JS binding vectors
         run: node bindings/js/test.mjs
+      - name: Kernel quickstart
+        run: cargo run --quiet --example quickstart --manifest-path kernel/Cargo.toml
 
   typescript:
     name: TypeScript SDK
@@ -61,6 +63,9 @@ jobs:
       - name: Build
         run: npm run build
         working-directory: sdk/typescript
+      - name: Quickstart
+        run: npm run quickstart
+        working-directory: sdk/typescript
 
   python:
     name: Python SDK
@@ -74,6 +79,9 @@ jobs:
         run: python -m pip install --upgrade pip && python -m pip install './sdk/python[dev]'
       - name: Tests
         run: python -m unittest discover -s tests
+        working-directory: sdk/python
+      - name: Quickstart
+        run: python examples/quickstart.py
         working-directory: sdk/python
 
   go:

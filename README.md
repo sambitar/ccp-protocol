@@ -30,11 +30,16 @@ never carry executable code.
 | `bindings/` | Go, JS, Kotlin, and Swift bindings over the kernel |
 | `conformance/` | Cross-language conformance and interop harness |
 | `docs/guides/` | Operational guides (persistence, transport, namespaces, identity, host catalogue, quickstarts) |
+| `docs/quickstart.md` | End-to-end loop in TypeScript, Python, and the Rust kernel |
+| `docs/implementation-status.md` | Spec section to language to vectors |
 | `docs/consistency-audit.md` | Principle-to-path audit of every authority mechanism |
 | `docs/plans/` | Phased build plans |
 | `phase4/`, `phase4-confirm/` | Independent-implementation reports |
 
 ## Quick start
+
+Start with [`docs/quickstart.md`](docs/quickstart.md): one page, the same
+five-step loop in TypeScript, Python, and Rust, with runnable sources.
 
 Provider (Node + Express):
 

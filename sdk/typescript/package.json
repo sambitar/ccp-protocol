@@ -43,6 +43,7 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.test.json",
     "provider": "npm run build && node examples/provider-node/server.ts",
+    "quickstart": "npm run build && node examples/quickstart/run.ts",
     "mcp": "npm run build && node examples/agent-mcp/server.ts",
     "mcp:demo": "npm run build && node examples/agent-mcp/demo.ts"
   },

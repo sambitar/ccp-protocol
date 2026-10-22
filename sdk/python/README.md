@@ -1,7 +1,7 @@
 # CCP reference SDK
 
 A Python reference runtime for the Capability Contacts Protocol (draft
-v0.4). It implements the protocol primitives and a runtime that validates
+v0.5). It implements the protocol primitives and a runtime that validates
 signals, enforces local grants, mediates host functions, supports
 two-phase confirmation, and keeps a private audit log.
 

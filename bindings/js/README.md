@@ -4,6 +4,11 @@ A dependency-free loader for `kernel/target/wasm32-unknown-unknown/release/ccp_k
 The module exports a string-based C ABI; this wrapper handles allocation and
 the shared result buffer.
 
+This is a kernel binding: it exposes canonicalization, signing, verification,
+the decision, and the state machine. It has no grant store, replay store,
+limit counters, host registry, audit log, or transport. For an end-to-end
+runtime, use `ccp-core` in `sdk/typescript`.
+
 ## Build
 
 ```sh

@@ -106,6 +106,15 @@ outside this app. It also does not mean libsignal itself executes
 payments: the encrypted channel carries the request and response; wallet
 and application code coordinate the transfer.
 
+The flow above is the **pull** profile: a request triggers consent and a
+response. A **push** profile — standing consent, then a later disclosure
+or announcement — uses the same grant record but has no request at
+disclosure time. The initial profile standardizes only
+`payment.address.resolve` (§25.6); preparing or submitting a transfer
+belongs to a separately reviewed extension. This illustration describes
+the generalized pattern, not a shipped payment flow. The runnable
+reference is `docs/quickstart.md`.
+
 CCP generalizes the pattern beyond payments. A capability might search a
 local folder, summarize selected email, retrieve a file, request a
 payment, or operate a device. Each capability must define exactly what
@@ -1127,11 +1136,14 @@ and interoperability, not on the name.
 ## 21. Worked examples
 
 These examples illustrate the model; they do not define finalized core
-intents.
+intents. Each names its interaction profile: **pull** (a request triggers
+consent and a response) or **push** (consent already exists, and the holder
+later discloses or announces).
 
 ### 21.1 Messenger payment address disclosure
 
 **Intent:** `payment.address.resolve`
+**Profile:** pull.
 
 The sender requests the recipient's current address for a specified
 payment flow. The recipient's client checks the recipient's local grant
@@ -1151,6 +1163,7 @@ another route using an address already known to the sender.
 ### 21.2 Local file search
 
 **Intent:** `files.search`
+**Profile:** pull.
 
 A user grants a service permission to search a named folder for files
 matching a query. The runtime confines access to that folder and returns
@@ -1160,6 +1173,7 @@ folders or uploading full files requires separate authority.
 ### 21.3 AI email summary
 
 **Intent:** `mail.search_and_summarize`
+**Profile:** pull.
 
 A local capability searches an approved mailbox and returns a short
 summary of relevant messages. It does not permit sending messages,
@@ -1169,6 +1183,7 @@ explicitly allows the required data egress.
 ### 21.4 Time-limited physical access
 
 **Intent:** `device.door.unlock`
+**Profile:** pull.
 
 A supported device may permit one unlock within a short validity window.
 Because physical access is high-impact, the capability should require
@@ -1178,6 +1193,7 @@ and explicit policy for user confirmation and failure recovery.
 ### 21.5 File retrieval
 
 **Intent:** `files.fetch`
+**Profile:** pull.
 
 A signal references a file. The runtime validates the source and
 expected content hash, downloads into a sandboxed directory, enforces

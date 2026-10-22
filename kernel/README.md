@@ -5,6 +5,18 @@ canonical JSON, Ed25519, the §25.3 schema subset, the §10.3 decision, and
 the §26.3 state machine. It is a third, independent implementation beside
 the TypeScript and Python SDKs.
 
+## This is a kernel, not a runtime
+
+The kernel has no grant store, manifest store, replay store, limit
+counters, pending confirmations, host registry, audit log, or transport.
+It verifies and decides over values you pass in. The C ABI and WASM build
+expose the same deterministic core and nothing more.
+
+The Rust runtime does not exist yet. A Rust application that needs the
+end-to-end loop must either port it (tracked as a P1 item) or call the
+TypeScript/Python runtime. See [`../docs/implementation-status.md`](../docs/implementation-status.md)
+and the runnable kernel example in [`examples/quickstart.rs`](examples/quickstart.rs).
+
 ## Build and test
 
 From the repository root:
@@ -43,7 +55,8 @@ rustup target add wasm32-unknown-unknown
 | `src/capi.rs` | C ABI and JSON envelopes |
 | `include/ccp.h` | C header |
 | `c-tests/smoke.c` | native smoke test |
-| `tests/vectors.rs` | v1 + v2 conformance |
+| `examples/quickstart.rs` | kernel-level decision loop |
+| `tests/vectors.rs` | v1, v2, v3 conformance |
 
 ## C ABI
 

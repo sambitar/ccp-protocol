@@ -4,6 +4,11 @@ JVM bindings over the portable kernel's C ABI, using JNA. The binding
 marshals JSON, calls the kernel, and returns a typed result; protocol logic
 stays in Rust.
 
+This is a kernel binding: it does not include a grant store, replay store,
+limit counters, host registry, audit log, or transport, and the Android
+artifacts are shared libraries rather than an app SDK. For an end-to-end
+runtime, use `sdk/typescript` or `sdk/python`.
+
 ## Prerequisites
 
 - JDK 21

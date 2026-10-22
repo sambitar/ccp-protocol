@@ -4,6 +4,10 @@ Go bindings over the portable kernel's C ABI. The binding only marshals
 inputs, calls the kernel, and parses the JSON envelope; protocol logic stays
 in Rust.
 
+This is a kernel binding: it does not include a grant store, replay store,
+limit counters, host registry, audit log, or transport. For an end-to-end
+runtime, use `sdk/typescript` or `sdk/python`.
+
 ## Prerequisites
 
 Build the kernel archive for the host:
