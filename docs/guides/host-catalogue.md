@@ -33,7 +33,13 @@ runtime refuses to register it otherwise.
 No payment host or intent is planned for 1.0. The payment rows are a design
 sketch for a possible extension profile.
 
-| Host | Class | Risk | Floor | Idempotency | Placement | Egress |
+> **Naming warning (pre-1.0).** The table below is the frozen v5 review
+> sketch and still uses `payment.*`. The protocol text and any future
+> profile should use `wallet.*`. Do not treat `payment.*` as a stable or
+> planned name. Aligning the names requires a new v6 vector suite, not an
+> edit to v5.
+
+| Host (v5 sketch name) | Class | Risk | Floor | Idempotency | Placement | Egress |
 | --- | --- | --- | --- | --- | --- | --- |
 | `payment.address.resolve` | read | read | none | pure | local | none |
 | `calendar.read` | read | read | none | pure | local | none |
@@ -58,9 +64,10 @@ all three runtimes validate it, so a profile cannot drift between languages.
 
 The table lists host identifiers. `payment.address.resolve` is a host name
 here; §21.1 reuses the same string as an illustrative intent. That collision
-is a sketch, not a naming precedent. A future extension profile should use
-`wallet.*` host names, keep intents in their own namespace, and add a v6
-vector suite rather than editing v5.
+is confined to the frozen v5 sketch and is not a naming precedent. The
+protocol text already uses `wallet.*`; a future extension profile should
+use `wallet.*` host names, keep intents in their own namespace, and add a
+v6 vector suite rather than editing v5.
 
 ### Review questions (Appendix B)
 
@@ -135,5 +142,7 @@ executor cannot reach past the grant with a dynamic call.
   (§19.3).
 - No host ships executable provider code in the initial profile.
 - A failed or unknown capability check fails closed.
-- `payment.submit` and `device.operation` are not suitable for unattended
-  agents without an independent review and a trusted confirmation path.
+- A transaction-submitting host (`wallet.transaction.submit`;
+  `payment.submit` in the v5 sketch) and `device.operation` are not suitable
+  for unattended agents without an independent review and a trusted
+  confirmation path.

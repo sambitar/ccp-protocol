@@ -76,7 +76,12 @@
 
 ### Task 4: Host catalogue
 
-- [ ] `docs/guides/host-catalogue.md`: the six core hosts from §26.4 and extension candidates (`calendar.read`, `contacts.read`, `mail.search`, `files.write`, `net.request`, `payment.prepare`, `payment.submit`, `device.operation`, `model.infer`, `payment.address.resolve`).
+- [ ] `docs/guides/host-catalogue.md`: the six core hosts from §26.4 and
+      extension candidates (`calendar.read`, `contacts.read`, `mail.search`,
+      `files.write`, `net.request`, `wallet.transaction.prepare`,
+      `wallet.transaction.submit`, `device.operation`, `model.infer`,
+      `wallet.address.read`). The frozen v5 host vectors retain the older
+      `payment.*` sketch names; see the catalogue's naming warning.
 - [ ] For each extension: purpose, minimum scope, confirmation requirement, idempotency/recovery, egress, and review status. State that none are enabled by the SDK and each needs its own §19.2 review.
 
 ### Task 5: Quickstarts
