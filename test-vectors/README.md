@@ -7,7 +7,8 @@ by a reference script that is also a runnable implementation of the rule.
 - Spec: `../CCP_Working_Draft_v0.5.md`
 - Rules implemented: §25.1 (strict canonical JSON), §25.2 (Ed25519),
   §26.3 (side-effect state machine), §10.3/§26.1 (signal validation and
-  grant matching), §25.8 (identity documents and admission policies).
+  grant matching), §25.8 (identity documents and admission policies),
+  §26.4 (host contracts and confirmation floors).
 
 ## Files
 
@@ -20,6 +21,7 @@ by a reference script that is also a runnable implementation of the rule.
 | `v2/` | `v2/generate.py` | adversarial canonical and validation boundaries; see `v2/README.md`. |
 | `v3/` | `v3/generate.py` | 0.5 dual-label compatibility; see `v3/README.md`. |
 | `v4/identity.json` | `v4/generate.py` | §25.8 identity documents, admission policies, and admission decisions. |
+| `v5/hosts.json` | `v5/generate.py` | §26.4 host contracts: classes, risk, confirmation floors, egress. |
 
 ## Regenerating
 
@@ -29,6 +31,7 @@ python3 validation.py
 /usr/bin/python3 v2/generate.py
 /usr/bin/python3 v3/generate.py
 /usr/bin/python3 v4/generate.py
+/usr/bin/python3 v5/generate.py
 ```
 
 v1 is frozen. v2 is additive and is exercised by `conformance/run.py` and
@@ -138,3 +141,17 @@ Three arrays, all keyed by `id`:
 The vector file is produced by `v4/generate.py`, which signs every document
 with a fixed seed and self-checks the admission decisions with a small
 reference evaluator.
+
+## `v5/hosts.json`
+
+One array of host-contract cases:
+
+- `host` is the runtime host identifier.
+- `profile` is the contract: `class`, `risk`, `minConfirmation`,
+  `idempotency`, `network`, `placement`, and `fields`.
+- `expected` is `valid` or `invalid_request`.
+
+The first cases are the catalogue both SDKs ship; the rest are rejections:
+missing class, suppressed confirmation on a write or irreversible host,
+undeclared fields on a network disclose host, unknown placement, duplicate
+fields, and a non-boolean `network`.

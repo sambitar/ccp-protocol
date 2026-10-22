@@ -23,25 +23,33 @@ not a publisher namespace. Intent naming is covered in
 | `confirm` | request a decision through trusted UI | control | Must show the runtime-generated §11.4 card; never auto-approves. |
 | `audit.append` | write a runtime-controlled audit event | control | Append-only; the intent cannot alter past records. |
 
-## Extension candidates
+## Extension hosts
 
 These are review candidates, not a registry. A runtime that installs one is
 responsible for its contract, and high-risk hosts require an independent
-review before deployment.
+review before deployment. Every extension host must declare a class; the
+runtime refuses to register it otherwise.
 
-| Host | Class | Minimum scope | Confirmation | Idempotency / recovery | Egress |
-| --- | --- | --- | --- | --- | --- |
-| `payment.address.resolve` | read | saved addresses only | none | pure read | none |
-| `calendar.read` | read | one calendar + time window | policy | pure read | none |
-| `contacts.read` | read | selected contact fields | policy | pure read | none |
-| `mail.search` | read | one mailbox + query | policy | pure read | none |
-| `store.write` | write | named keys + size cap | per action | caller-supplied idempotency key; read-back reconciliation | none |
-| `files.write` | write | one directory + extension allow-list | per action | temp file + atomic rename; overwrite requires explicit scope | none |
-| `net.request` | egress | host allow-list + methods | per action | idempotency key for non-GET; response is untrusted data | declared fields only |
-| `device.operation` | control | named operation | per action, trusted UI | operation-specific; default no retry | none |
-| `model.infer` | compute | provider + model + token cap | policy | deterministic where possible; no silent retries | prompt/response fields |
-| `payment.prepare` | write | amount cap + payee allow-list | per action | creates a pending intent, no transfer | payee metadata only |
-| `payment.submit` | high | prepared intent + second confirmation | per action | never auto-retry; reconcile by payment id | payment metadata |
+| Host | Class | Risk | Floor | Idempotency | Placement | Egress |
+| --- | --- | --- | --- | --- | --- | --- |
+| `payment.address.resolve` | read | read | none | pure | local | none |
+| `calendar.read` | read | read | none | pure | local | none |
+| `contacts.read` | read | read | none | pure | local | none |
+| `mail.search` | read | read | none | pure | local | none |
+| `store.write` | write | write | per_action | caller_key | local | none |
+| `files.write` | write | write | per_action | atomic | local | none |
+| `net.request` | disclose | disclose | per_action | caller_key | local, remote | declared fields |
+| `device.operation` | control | irreversible | per_action | none | local | none |
+| `model.infer` | compute | disclose | per_action | pure | local, remote | prompt, response |
+| `payment.prepare` | write | write | per_action | caller_key | local, remote | payee, amount |
+| `payment.submit` | write | irreversible | per_action | none | local, remote | payment_id |
+
+`Floor` is the confirmation floor: the runtime requires per-action
+confirmation even if the manifest claims `none`, and a policy that tries to
+admit the intent unattended is refused with `risk_not_admittable`.
+
+The machine-readable form of this table is `test-vectors/v5/hosts.json`;
+both SDKs validate it, so a profile cannot drift between languages.
 
 ### Review questions (Appendix B)
 
@@ -53,17 +61,18 @@ result may leak; and what metadata remains visible.
 
 ### Registering a host
 
-A host declares what it may do. The defaults are local, offline, and
-field-free, so forgetting metadata cannot widen a grant.
+A host declares its contract. Core hosts may omit it; an extension host
+without a class is rejected at registration time.
 
 ```ts
 hosts.registerHost("store.read", (id) => store[id]);
-// -> { network: false, placement: ["local"], fields: [] }
+// -> class read, risk read, floor none, local, offline, no fields
 
 hosts.registerHost("net.request", (url) => fetch(url), {
+  class: "disclose",
   network: true,
   placement: ["local", "remote"],
-  fields: ["query"],
+  fields: ["url", "method", "body"],
 });
 ```
 
@@ -72,14 +81,30 @@ hosts.register_host("store.read", lambda item_id: store[item_id])
 hosts.register_host(
     "net.request",
     lambda url: fetch(url),
+    host_class="disclose",
     network=True,
     placement=["local", "remote"],
-    fields=["query"],
+    fields=["url", "method", "body"],
 )
 ```
 
-The runtime compares this against the intent and the grant before every
-invocation:
+A class fixes the defaults; the installer may tighten them but not loosen
+what matters:
+
+| Class | Risk | Floor | Idempotency |
+| --- | --- | --- | --- |
+| `read` | read | none | pure |
+| `disclose` | disclose | per_action | pure |
+| `write` | write | per_action | caller_key |
+| `control` | write | per_action | none |
+| `compute` | read | per_action | pure |
+
+A `write`, `control`, or `compute` host cannot set the floor to `none`, and
+an `irreversible` risk cannot either. A network `disclose` host must declare
+the fields it sends.
+
+The runtime compares the contract against the intent and the grant before
+every invocation:
 
 | Check | Refusal |
 | --- | --- |
@@ -87,9 +112,11 @@ invocation:
 | Host supports the intent's placement | `capability_unavailable` |
 | Host needs network only if `grant.egress.network` is true | `capability_unavailable` |
 | Every host field is in `grant.egress.fields` | `capability_unavailable` |
+| A per-action floor forces confirmation | `confirmation_required` |
+| A per-action floor blocks policy admission | `risk_not_admittable` |
 
-The same ceiling is re-checked on each `HostAccess.call`, so an executor
-cannot reach past the grant with a dynamic call.
+The same egress ceiling is re-checked on each `HostAccess.call`, so an
+executor cannot reach past the grant with a dynamic call.
 
 ## Hard rules
 

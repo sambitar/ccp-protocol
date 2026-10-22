@@ -167,9 +167,9 @@ npm --prefix sdk/typescript pack --dry-run
 cargo package --allow-dirty --manifest-path kernel/Cargo.toml
 ```
 
-Expected: all suites green; 51 v1 + 38 v2 + 8 v3 + 39 v4 vectors (v4 is
-TypeScript and Python only); WASM 97/97; Kotlin 109/109; C smoke ok; interop
-wires identical; all three packages build.
+Expected: all suites green; 51 v1 + 38 v2 + 8 v3 + 39 v4 + 20 v5 vectors
+(v4 is TypeScript and Python only; v5 is contract validation); WASM 97/97;
+Kotlin 109/109; C smoke ok; interop wires identical; all three packages build.
 
 ## Clean-environment verification (done)
 

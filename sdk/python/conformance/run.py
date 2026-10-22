@@ -24,6 +24,7 @@ from ccp.identity import (  # noqa: E402
     verify_admission_policy,
     verify_identity_document,
 )
+from ccp.hosts import HostProfileError, validate_host_profile  # noqa: E402
 from ccp.model import Grant  # noqa: E402
 
 INTENT_SPEC = {
@@ -180,6 +181,22 @@ def run_admissions(data):
     return _summarise(len(data["admissions"]), failures)
 
 
+def run_hosts(data):
+    failures = []
+    for vector in data["vectors"]:
+        try:
+            validate_host_profile(vector["host"], vector["profile"])
+            got = "valid"
+        except HostProfileError as exc:
+            got = exc.code
+        except Exception as exc:  # noqa: BLE001 - reported as a failure
+            got = "error:%s" % exc
+        if got != vector["expected"]:
+            failures.append({"id": vector["id"],
+                             "expected": vector["expected"], "got": got})
+    return _summarise(len(data["vectors"]), failures)
+
+
 def main():
     if len(sys.argv) != 2:
         print("usage: python3 conformance/run.py <vectors-dir>", file=sys.stderr)
@@ -198,6 +215,8 @@ def main():
         summary["identity"] = run_identities(data)
         summary["policy"] = run_policies(data)
         summary["admission"] = run_admissions(data)
+    if os.path.exists(os.path.join(directory, "hosts.json")):
+        summary["hosts"] = run_hosts(load(directory, "hosts.json"))
 
     print(json.dumps(summary, indent=2))
     return 0 if all(entry["failed"] == 0 for entry in summary.values()) else 1

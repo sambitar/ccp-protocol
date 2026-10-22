@@ -17,7 +17,13 @@ from .consumer import (
 from .crypto import CryptoError, SigningKey, VerifyingKey
 from .decision import decide
 from .errors import AUTHORIZED, CONFIRMATION_REQUIRED, ERROR_CODES, CCPError
-from .hosts import HostAccess, HostRegistry
+from .hosts import (
+    CORE_HOSTS,
+    HostAccess,
+    HostProfileError,
+    HostRegistry,
+    validate_host_profile,
+)
 from .grants import create_grant
 from .identity import (
     AdmissionRequest,
@@ -79,6 +85,7 @@ __all__ = [
     "AUTHORIZED",
     "CONFIRMATION_REQUIRED",
     "CLOCK_SKEW_SECONDS",
+    "CORE_HOSTS",
     "CanonicalError",
     "CCPError",
     "CryptoError",
@@ -87,6 +94,7 @@ __all__ = [
     "Grant",
     "GrantStore",
     "HostAccess",
+    "HostProfileError",
     "HostRegistry",
     "IDENTITY_CHANGED_REASON",
     "IDENTITY_TYPE",
@@ -138,4 +146,5 @@ __all__ = [
     "verify_admission_policy",
     "verify_identity_document",
     "verify_signal",
+    "validate_host_profile",
 ]

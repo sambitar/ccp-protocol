@@ -14,6 +14,7 @@ import { join } from "node:path";
 import { decide, parseStrict, serialize } from "../dist/index.js";
 import {
   admit,
+  validateHostProfile,
   verifyAdmissionPolicy,
   verifyIdentityDocument,
 } from "../dist/index.js";
@@ -182,6 +183,23 @@ function runAdmissions(data) {
   return summarise(data.admissions.length, failures);
 }
 
+function runHosts(data) {
+  const failures = [];
+  for (const vector of data.vectors) {
+    let got;
+    try {
+      validateHostProfile(vector.host, vector.profile);
+      got = "valid";
+    } catch (error) {
+      got = codeOf(error);
+    }
+    if (got !== vector.expected) {
+      failures.push({ id: vector.id, expected: vector.expected, got });
+    }
+  }
+  return summarise(data.vectors.length, failures);
+}
+
 function main() {
   const directory = process.argv[2];
   if (!directory) {
@@ -203,6 +221,9 @@ function main() {
     summary.identity = runIdentities(data);
     summary.policy = runPolicies(data);
     summary.admission = runAdmissions(data);
+  }
+  if (existsSync(join(directory, "hosts.json"))) {
+    summary.hosts = runHosts(load(directory, "hosts.json"));
   }
 
   console.log(JSON.stringify(summary, null, 2));

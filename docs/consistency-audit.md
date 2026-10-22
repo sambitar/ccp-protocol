@@ -21,6 +21,7 @@ can actually take → test**. A mechanism without a path counts as missing.
 | 6. Revocation under user control | lifecycle states | `runtime.revokeGrant` / `revoke_grant` | `runtime.test.ts`, SQLite reopen | fixed |
 | 7. Safe defaults | fail-closed decisions | `decide`, `admit` defaults | `vectors-validation`, `v4` | pass |
 | §7.4 key change | verify → suspend → new grant | `runtime.verifyContactIdentity` | `identity-runtime.test.ts` | fixed |
+| §26.4 host contracts | class, risk, floor, idempotency | `registerHost` / `register_host` | `host-profiles.test.ts`, `v5` | pass |
 | 9. Human-usable security | permission card | `permissionCard` | `consumer.test.ts` | pass |
 | 10. Agents get no exemption | grants only | `Agent.signalFor` + runtime | `agent.test.ts` | pass |
 
@@ -118,6 +119,20 @@ cannot serve it, a host needs network the grant denies, or a host may transmit
 a field the grant does not allow. `HostAccess.call` repeats the check so a
 dynamic call cannot escape the ceiling (§26.4).
 
+### I. Extension hosts had no enforceable contract (new)
+
+Egress metadata alone does not describe a host's risk. A manifest could
+declare `confirmation: none` for a write intent, and a policy author could
+label `payment.submit` as `read`, and neither would be caught.
+
+Fixed: every host now carries a contract: class, risk, confirmation floor,
+idempotency, placement, and egress. Extension hosts cannot be registered
+without a class. A `write`, `control`, `compute`, or `irreversible` host can
+never suppress confirmation; the runtime forces per-action confirmation even
+when the manifest says `none`, and policy admission refuses the intent with
+`risk_not_admittable`. The catalogue is pinned by `test-vectors/v5` and
+validated by both SDKs.
+
 ## Open items
 
 These are known, bounded gaps. None of them lets a requester gain authority it
@@ -128,6 +143,7 @@ was not granted.
 | 1. Resource limits | Only quota counters (`calls_per_hour`) are enforced. §11.3 is a SHOULD for CPU, time, and size. | Timeouts and payload caps in the executor wrapper; a stated limit per host class. |
 | 2. Delegation enforcement | `attenuates` is a pure check; sub-grants are not resolved by the runtime. §26.6 defers this. | A delegated-grant store and a runtime path that selects the narrowest grant. |
 | 3. Contact-level pause | §9.4.1 is a MAY. Suspension is provided; pause at contact level is not. | A `pauseContact` wrapper over the same transition. |
+| 4. Idempotency is declared, not enforced | Profiles record `pure`, `caller_key`, `atomic`, or `none`, but the runtime does not implement retry or crash recovery from that field. | A runtime retry helper that reads the field and refuses an unsafe retry. |
 
 ## Reproducing
 

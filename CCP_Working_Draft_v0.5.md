@@ -1836,14 +1836,30 @@ profiles, not the core, and each requires its own review (§19.2, §25.6).
 A runtime MUST reject an intent whose host functions are not in the
 installed catalogue.
 
-Each installed host function MUST declare:
+Each installed host function MUST declare a contract:
 
+-   its class (`read`, `write`, `disclose`, `control`, `compute`);
 -   the placement classes it can serve (`local`, `remote`, `delegated`);
+-   its risk (`read`, `write`, `disclose`, `irreversible`);
+-   its confirmation floor (`none` or `per_action`);
+-   its idempotency behavior (`pure`, `caller_key`, `atomic`, `none`);
 -   whether it may send data off the device;
 -   the data categories it may transmit.
 
-The defaults MUST be the safe ones: local placement, no network, no
-fields. Before executing an intent, a runtime MUST refuse with
+Only the core hosts in the table above MAY be installed without declaring
+a class. Every extension host MUST declare one, and the class fixes the
+risk, confirmation floor, and idempotency defaults unless the installer
+overrides them explicitly.
+
+A `write`, `control`, or `compute` host MUST NOT set its confirmation
+floor to `none`, and neither may any host with `irreversible` risk. This
+floor applies even when the manifest declares `confirmation: none` for
+the intent: the runtime MUST require per-action confirmation, and
+unattended policy admission MUST be refused with `risk_not_admittable`.
+
+The defaults MUST be the safe ones: `read` class, local placement, no
+network, no fields, and `per_action` for anything that is not a read.
+Before executing an intent, a runtime MUST refuse with
 `capability_unavailable` when:
 
 -   the intent's declared placement is not in the grant's `placement`;
@@ -1852,8 +1868,9 @@ fields. Before executing an intent, a runtime MUST refuse with
 -   a required host may transmit a data category the grant does not
     allow.
 
-The same check MUST apply on every host call, not only once before
+The same checks MUST apply on every host call, not only once before
 execution, so a host that changes after the grant cannot widen it.
+A host that cannot meet its declared contract MUST fail closed.
 
 ### 26.5 Remote execution
 

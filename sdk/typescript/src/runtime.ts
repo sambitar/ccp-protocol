@@ -68,21 +68,208 @@ export class SchemaRegistry {
 export type IntentExecutor = (params: any, access: HostAccess) => any;
 export type HostFunction = (...args: any[]) => any;
 
-/** What a host function is allowed to do (§12). */
-export interface HostOptions {
+export type HostClass = "read" | "write" | "disclose" | "control" | "compute";
+export type HostRisk = "read" | "write" | "disclose" | "irreversible";
+export type HostPlacement = "local" | "remote" | "delegated";
+export type ConfirmationFloor = "none" | "per_action";
+export type Idempotency =
+  | "pure"
+  | "caller_key"
+  | "atomic"
+  | "none";
+
+/**
+ * A host contract (§26.4). Core hosts may omit it; every extension host must
+ * declare at least `class`, which fixes the risk and confirmation floor.
+ */
+export interface HostProfile {
+  class?: HostClass;
+  risk?: HostRisk;
+  minConfirmation?: ConfirmationFloor;
+  idempotency?: Idempotency;
   /** May this host send data off the device? Defaults to false. */
   network?: boolean;
   /** Placements this host can serve. Defaults to `["local"]`. */
-  placement?: string[];
+  placement?: HostPlacement[];
   /** Data categories this host may transmit. Defaults to none. */
   fields?: string[];
 }
 
+export interface NormalizedHostProfile {
+  class: HostClass;
+  risk: HostRisk;
+  minConfirmation: ConfirmationFloor;
+  idempotency: Idempotency;
+  network: boolean;
+  placement: HostPlacement[];
+  fields: string[];
+}
+
 interface HostEntry {
   fn: HostFunction;
-  network: boolean;
-  placement: string[];
-  fields: string[];
+  profile: NormalizedHostProfile;
+}
+
+/** The only hosts that may be registered without an explicit profile. */
+export const CORE_HOSTS: ReadonlySet<string> = new Set([
+  "store.read",
+  "files.read",
+  "files.search",
+  "notify",
+  "confirm",
+  "audit.append",
+]);
+
+const HOST_CLASSES: ReadonlySet<string> = new Set([
+  "read",
+  "write",
+  "disclose",
+  "control",
+  "compute",
+]);
+const HOST_RISKS: ReadonlySet<string> = new Set([
+  "read",
+  "write",
+  "disclose",
+  "irreversible",
+]);
+const HOST_PLACEMENTS: ReadonlySet<string> = new Set([
+  "local",
+  "remote",
+  "delegated",
+]);
+const IDEMPOTENCY: ReadonlySet<string> = new Set([
+  "pure",
+  "caller_key",
+  "atomic",
+  "none",
+]);
+
+const CLASS_DEFAULTS: Record<
+  HostClass,
+  { risk: HostRisk; minConfirmation: ConfirmationFloor; idempotency: Idempotency }
+> = {
+  read: { risk: "read", minConfirmation: "none", idempotency: "pure" },
+  disclose: { risk: "disclose", minConfirmation: "per_action", idempotency: "pure" },
+  write: { risk: "write", minConfirmation: "per_action", idempotency: "caller_key" },
+  control: { risk: "write", minConfirmation: "per_action", idempotency: "none" },
+  compute: { risk: "read", minConfirmation: "per_action", idempotency: "pure" },
+};
+
+export class HostProfileError extends Error {
+  readonly code = "invalid_request";
+
+  constructor(message: string) {
+    super(`invalid_request: ${message}`);
+    this.name = "HostProfileError";
+  }
+}
+
+/**
+ * Validate and normalize a host profile (§26.4).
+ *
+ * Extension hosts (anything outside the core six) must declare a class; the
+ * rest of the contract follows from it unless explicitly overridden. A
+ * `write`, `control`, or `compute` host can never suppress confirmation, and
+ * an `irreversible` risk cannot either.
+ */
+export function validateHostProfile(
+  name: string,
+  profile: HostProfile = {}
+): NormalizedHostProfile {
+  if (typeof name !== "string" || name === "") {
+    throw new HostProfileError("host name is required");
+  }
+
+  const declared = profile.class;
+  if (declared === undefined && !CORE_HOSTS.has(name)) {
+    throw new HostProfileError(`extension host ${name} requires a class`);
+  }
+  if (declared !== undefined && !HOST_CLASSES.has(declared)) {
+    throw new HostProfileError(`unknown host class: ${declared}`);
+  }
+  const hostClass = (declared ?? "read") as HostClass;
+  const defaults = CLASS_DEFAULTS[hostClass];
+
+  const risk = (profile.risk ?? defaults.risk) as HostRisk;
+  if (!HOST_RISKS.has(risk)) {
+    throw new HostProfileError(`unknown host risk: ${risk}`);
+  }
+
+  const minConfirmation = (profile.minConfirmation ??
+    defaults.minConfirmation) as ConfirmationFloor;
+  if (minConfirmation !== "none" && minConfirmation !== "per_action") {
+    throw new HostProfileError(
+      `unknown confirmation floor: ${minConfirmation}`
+    );
+  }
+  if (minConfirmation === "none") {
+    if (hostClass !== "read" && hostClass !== "disclose") {
+      throw new HostProfileError(
+        `a ${hostClass} host cannot suppress confirmation`
+      );
+    }
+    if (risk === "irreversible") {
+      throw new HostProfileError(
+        "an irreversible host cannot suppress confirmation"
+      );
+    }
+  }
+
+  const idempotency = (profile.idempotency ?? defaults.idempotency) as Idempotency;
+  if (!IDEMPOTENCY.has(idempotency)) {
+    throw new HostProfileError(`unknown idempotency: ${idempotency}`);
+  }
+
+  const network = profile.network === true;
+  if (profile.network !== undefined && typeof profile.network !== "boolean") {
+    throw new HostProfileError("network must be a boolean");
+  }
+
+  const placement = profile.placement ?? ["local"];
+  if (!Array.isArray(placement) || placement.length === 0) {
+    throw new HostProfileError("placement must be a non-empty array");
+  }
+  const seenPlacement = new Set<string>();
+  for (const entry of placement) {
+    if (typeof entry !== "string" || !HOST_PLACEMENTS.has(entry)) {
+      throw new HostProfileError(`unknown placement: ${entry}`);
+    }
+    if (seenPlacement.has(entry)) {
+      throw new HostProfileError(`duplicate placement: ${entry}`);
+    }
+    seenPlacement.add(entry);
+  }
+
+  const fields = profile.fields ?? [];
+  if (!Array.isArray(fields)) {
+    throw new HostProfileError("fields must be an array");
+  }
+  const seenFields = new Set<string>();
+  for (const field of fields) {
+    if (typeof field !== "string" || field === "") {
+      throw new HostProfileError("fields must be non-empty strings");
+    }
+    if (seenFields.has(field)) {
+      throw new HostProfileError(`duplicate field: ${field}`);
+    }
+    seenFields.add(field);
+  }
+  if (network && fields.length === 0 && hostClass === "disclose") {
+    throw new HostProfileError(
+      "a network disclose host must declare the fields it sends"
+    );
+  }
+
+  return {
+    class: hostClass,
+    risk,
+    minConfirmation,
+    idempotency,
+    network,
+    placement: placement as HostPlacement[],
+    fields: [...fields],
+  };
 }
 
 /** The grant's data-egress ceiling, enforced on every host call. */
@@ -113,10 +300,10 @@ export class HostAccess {
     if (entry === undefined) {
       throw new Error(`host function not installed: ${name}`);
     }
-    if (entry.network && !this.policy.network) {
+    if (entry.profile.network && !this.policy.network) {
       throw new Error(`host requires network egress not granted: ${name}`);
     }
-    for (const field of entry.fields) {
+    for (const field of entry.profile.fields) {
       if (!this.policy.fields.has(field)) {
         throw new Error(`host may send an undeclared field: ${name}/${field}`);
       }
@@ -133,12 +320,14 @@ export class HostRegistry {
   private _hosts = new Map<string, HostEntry>();
   private _intents = new Map<string, IntentExecutor>();
 
-  registerHost(name: string, fn: HostFunction, options: HostOptions = {}): void {
+  registerHost(
+    name: string,
+    fn: HostFunction,
+    profile: HostProfile = {}
+  ): void {
     this._hosts.set(name, {
       fn,
-      network: options.network === true,
-      placement: options.placement ?? ["local"],
-      fields: options.fields ?? [],
+      profile: validateHostProfile(name, profile),
     });
   }
 
@@ -150,7 +339,7 @@ export class HostRegistry {
     return this._hosts.get(name)?.fn;
   }
 
-  /** Metadata used to enforce placement and egress (§12). */
+  /** Metadata used to enforce placement, egress, and confirmation (§12). */
   hostMeta(name: string): HostEntry | undefined {
     return this._hosts.get(name);
   }
@@ -355,7 +544,9 @@ export class Runtime {
       );
     }
 
-    if (outcome === CONFIRMATION_REQUIRED) {
+    const requiresConfirmation =
+      outcome === CONFIRMATION_REQUIRED || this.hostFloor(intentSpec);
+    if (requiresConfirmation) {
       const pendingId = randomId();
       await this.pendingStore.put({
         id: pendingId,
@@ -556,6 +747,18 @@ export class Runtime {
     const granted = admittedGrant(policy, request, result);
     if (granted === undefined) return { result };
 
+    // A policy may never admit an intent whose hosts require a human.
+    const intentSpec = manifest.manifest.intents?.[granted.intent];
+    for (const capability of intentSpec?.required_capabilities ?? []) {
+      const meta = this.hosts.hostMeta(capability);
+      if (meta === undefined) {
+        return { result: { decision: "deny", reason: "capability_unavailable" } };
+      }
+      if (meta.profile.minConfirmation !== "none") {
+        return { result: { decision: "deny", reason: "risk_not_admittable" } };
+      }
+    }
+
     const existing = await this.grants.get(granted.id);
     if (existing !== undefined) return { result, grant: existing };
 
@@ -742,19 +945,28 @@ export class Runtime {
     for (const capability of required) {
       const meta = this.hosts.hostMeta(capability);
       if (meta === undefined) return `host ${capability} is not installed`;
-      if (!meta.placement.includes(placement)) {
+      if (!meta.profile.placement.includes(placement)) {
         return `host ${capability} cannot run with ${placement} placement`;
       }
-      if (meta.network && !policy.network) {
+      if (meta.profile.network && !policy.network) {
         return `host ${capability} requires network egress not granted`;
       }
-      for (const field of meta.fields) {
+      for (const field of meta.profile.fields) {
         if (!policy.fields.has(field)) {
           return `host ${capability} may send undeclared field ${field}`;
         }
       }
     }
     return undefined;
+  }
+
+  /** True when a required host declares a per-action confirmation floor. */
+  private hostFloor(intentSpec: any): boolean {
+    for (const capability of intentSpec.required_capabilities ?? []) {
+      const meta = this.hosts.hostMeta(capability);
+      if (meta?.profile.minConfirmation === "per_action") return true;
+    }
+    return false;
   }
 
   private egressPolicy(grant: Grant): EgressPolicy {

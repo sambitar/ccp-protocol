@@ -1,0 +1,229 @@
+{
+  "ccp": "0.5-draft",
+  "rule": "host contracts and confirmation floors (§26.4)",
+  "vectors": [
+    {
+      "id": "host-001",
+      "name": "store.read catalogue profile",
+      "host": "store.read",
+      "profile": {},
+      "expected": "valid"
+    },
+    {
+      "id": "host-002",
+      "name": "store.write catalogue profile",
+      "host": "store.write",
+      "profile": {
+        "class": "write"
+      },
+      "expected": "valid"
+    },
+    {
+      "id": "host-003",
+      "name": "files.write catalogue profile",
+      "host": "files.write",
+      "profile": {
+        "class": "write"
+      },
+      "expected": "valid"
+    },
+    {
+      "id": "host-004",
+      "name": "net.request catalogue profile",
+      "host": "net.request",
+      "profile": {
+        "class": "disclose",
+        "network": true,
+        "placement": [
+          "local",
+          "remote"
+        ],
+        "fields": [
+          "url",
+          "method",
+          "body"
+        ]
+      },
+      "expected": "valid"
+    },
+    {
+      "id": "host-005",
+      "name": "model.infer catalogue profile",
+      "host": "model.infer",
+      "profile": {
+        "class": "compute",
+        "risk": "disclose",
+        "network": true,
+        "placement": [
+          "local",
+          "remote"
+        ],
+        "fields": [
+          "prompt",
+          "response"
+        ]
+      },
+      "expected": "valid"
+    },
+    {
+      "id": "host-006",
+      "name": "device.operation catalogue profile",
+      "host": "device.operation",
+      "profile": {
+        "class": "control",
+        "risk": "irreversible"
+      },
+      "expected": "valid"
+    },
+    {
+      "id": "host-007",
+      "name": "payment.prepare catalogue profile",
+      "host": "payment.prepare",
+      "profile": {
+        "class": "write",
+        "network": true,
+        "fields": [
+          "payee",
+          "amount"
+        ]
+      },
+      "expected": "valid"
+    },
+    {
+      "id": "host-008",
+      "name": "payment.submit catalogue profile",
+      "host": "payment.submit",
+      "profile": {
+        "class": "write",
+        "risk": "irreversible",
+        "network": true,
+        "fields": [
+          "payment_id"
+        ]
+      },
+      "expected": "valid"
+    },
+    {
+      "id": "host-009",
+      "name": "payment.address.resolve catalogue profile",
+      "host": "payment.address.resolve",
+      "profile": {
+        "class": "read"
+      },
+      "expected": "valid"
+    },
+    {
+      "id": "host-010",
+      "name": "calendar.read catalogue profile",
+      "host": "calendar.read",
+      "profile": {
+        "class": "read"
+      },
+      "expected": "valid"
+    },
+    {
+      "id": "host-011",
+      "name": "contacts.read catalogue profile",
+      "host": "contacts.read",
+      "profile": {
+        "class": "read"
+      },
+      "expected": "valid"
+    },
+    {
+      "id": "host-012",
+      "name": "mail.search catalogue profile",
+      "host": "mail.search",
+      "profile": {
+        "class": "read"
+      },
+      "expected": "valid"
+    },
+    {
+      "id": "host-bad-001",
+      "name": "extension host without a class",
+      "host": "net.request",
+      "profile": {},
+      "expected": "invalid_request"
+    },
+    {
+      "id": "host-bad-002",
+      "name": "network disclose host without fields",
+      "host": "net.request",
+      "profile": {
+        "class": "disclose",
+        "network": true
+      },
+      "expected": "invalid_request"
+    },
+    {
+      "id": "host-bad-003",
+      "name": "write host suppressing confirmation",
+      "host": "store.write",
+      "profile": {
+        "class": "write",
+        "minConfirmation": "none"
+      },
+      "expected": "invalid_request"
+    },
+    {
+      "id": "host-bad-004",
+      "name": "irreversible host suppressing confirmation",
+      "host": "payment.submit",
+      "profile": {
+        "class": "write",
+        "risk": "irreversible",
+        "minConfirmation": "none"
+      },
+      "expected": "invalid_request"
+    },
+    {
+      "id": "host-bad-005",
+      "name": "unknown placement",
+      "host": "device.operation",
+      "profile": {
+        "class": "control",
+        "placement": [
+          "edge"
+        ]
+      },
+      "expected": "invalid_request"
+    },
+    {
+      "id": "host-bad-006",
+      "name": "duplicate field",
+      "host": "mail.search",
+      "profile": {
+        "class": "read",
+        "fields": [
+          "q",
+          "q"
+        ]
+      },
+      "expected": "invalid_request"
+    },
+    {
+      "id": "host-bad-007",
+      "name": "non-boolean network",
+      "host": "net.request",
+      "profile": {
+        "class": "disclose",
+        "network": "yes",
+        "fields": [
+          "url"
+        ]
+      },
+      "expected": "invalid_request"
+    },
+    {
+      "id": "host-bad-008",
+      "name": "compute host suppressing confirmation",
+      "host": "model.infer",
+      "profile": {
+        "class": "compute",
+        "minConfirmation": "none"
+      },
+      "expected": "invalid_request"
+    }
+  ]
+}

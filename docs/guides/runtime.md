@@ -47,10 +47,12 @@ if (decision.outcome === "confirmation_required") {
   `GrantStore`, `ReplayStore`, `LimitStore`, `PendingStore`, and
   `AuditStore`; mutation methods must be atomic (`tryReserve`, `markIfNew`,
   `take`).
-- Host functions declare what they may do: `registerHost(name, fn, {
-  network, placement, fields })`. The defaults are local, offline, and no
-  fields; the runtime refuses a host whose metadata exceeds the grant
-  (§12, §26.4). See [`host-catalogue.md`](host-catalogue.md).
+- Host functions declare a contract: `registerHost(name, fn, { class, risk,
+  minConfirmation, idempotency, network, placement, fields })`. Core hosts
+  may omit it; an extension host without a class is rejected. The defaults
+  are local, offline, no fields, and read-only. A per-action floor forces
+  confirmation even when the manifest says `none` (§12, §26.4). See
+  [`host-catalogue.md`](host-catalogue.md).
 - Lifecycle goes through the runtime, because it must persist and audit the
   change (§9.4):
 

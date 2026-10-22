@@ -129,7 +129,8 @@ class Runtime:
             return self._reject("capability_unavailable", request_id, grant,
                                 detail=deployment)
 
-        if decision == CONFIRMATION_REQUIRED:
+        if (decision == CONFIRMATION_REQUIRED
+                or self._host_floor(intent_spec)):
             pending_id = uuid.uuid4().hex
             self.pending_store.put(
                 Pending(pending_id, signal, grant, intent_spec))
@@ -307,6 +308,18 @@ class Runtime:
             return AdmitRequestResult(result)
 
         granted = admitted_grant(policy, request, result)
+
+        # A policy may never admit an intent whose hosts require a human.
+        intent_spec = (verified.intents or {}).get(granted.intent) or {}
+        for capability in intent_spec.get("required_capabilities", []):
+            meta = self.hosts.host_meta(capability)
+            if meta is None:
+                return AdmitRequestResult(
+                    AdmissionResult("deny", "capability_unavailable"))
+            if meta["profile"]["minConfirmation"] != "none":
+                return AdmitRequestResult(
+                    AdmissionResult("deny", "risk_not_admittable"))
+
         existing = self.grants.get(granted.id)
         if existing is not None:
             return AdmitRequestResult(result, existing)
@@ -382,17 +395,26 @@ class Runtime:
             meta = self.hosts.host_meta(capability)
             if meta is None:
                 return "host %s is not installed" % (capability,)
-            if placement not in meta["placement"]:
+            profile = meta["profile"]
+            if placement not in profile["placement"]:
                 return ("host %s cannot run with %s placement"
                         % (capability, placement))
-            if meta["network"] and not policy["network"]:
+            if profile["network"] and not policy["network"]:
                 return ("host %s requires network egress not granted"
                         % (capability,))
-            for field in meta["fields"]:
+            for field in profile["fields"]:
                 if field not in policy["fields"]:
                     return ("host %s may send undeclared field %s"
                             % (capability, field))
         return None
+
+    def _host_floor(self, intent_spec):
+        """True when a required host declares a per-action confirmation floor."""
+        for capability in intent_spec.get("required_capabilities", []):
+            meta = self.hosts.host_meta(capability)
+            if meta is not None and meta["profile"]["minConfirmation"] != "none":
+                return True
+        return False
 
     @staticmethod
     def _grant_state_error(grant, now):

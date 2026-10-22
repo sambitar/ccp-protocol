@@ -3,6 +3,10 @@ import { keyIdFromPublic, publicFromSeed } from "../src/crypto.js";
 import { signManifest, signSignal } from "../src/requester.js";
 import { verifyManifest } from "../src/consumer.js";
 import { createGrant } from "../src/grants.js";
+import {
+  buildAdmissionPolicy,
+  verifyAdmissionPolicy,
+} from "../src/identity.js";
 import { HostRegistry, Runtime, SchemaRegistry } from "../src/runtime.js";
 import {
   MemoryAuditLog,
@@ -90,12 +94,16 @@ function world(intent: any, hostOptions: any = {}) {
     },
     REQUESTER_SEED
   );
-  return { runtime, grant, signal, hosts };
+  return { runtime, grant, signal, hosts, manifest };
 }
 
 describe("egress and placement enforcement", () => {
   it("refuses a network host under a local-only grant", async () => {
-    const { runtime, signal } = world(LOCAL_INTENT, { network: true });
+    const { runtime, signal } = world(LOCAL_INTENT, {
+      class: "disclose",
+      network: true,
+      fields: ["q"],
+    });
     const decision = await runtime.submit(signal, REQUESTER_PUBLIC);
     expect(decision.error).toBe("capability_unavailable");
     expect(decision.detail).toContain("network egress");
@@ -107,12 +115,15 @@ describe("egress and placement enforcement", () => {
       data_egress: { network: true, fields: ["q"] },
     };
     const { runtime, signal } = world(intent, {
+      class: "disclose",
       network: true,
       fields: ["q"],
     });
-    const decision = await runtime.submit(signal, REQUESTER_PUBLIC);
-    expect(decision.outcome).toBe("authorized");
-    expect(decision.result).toEqual({ ok: true });
+    const first = await runtime.submit(signal, REQUESTER_PUBLIC);
+    expect(first.outcome).toBe("confirmation_required");
+    const done = await runtime.confirm(first.pending_id!, true);
+    expect(done.outcome).toBe("authorized");
+    expect(done.result).toEqual({ ok: true });
   });
 
   it("refuses a host that transmits an undeclared field", async () => {
@@ -121,6 +132,7 @@ describe("egress and placement enforcement", () => {
       data_egress: { network: true, fields: ["q"] },
     };
     const { runtime, signal } = world(intent, {
+      class: "disclose",
       network: true,
       fields: ["q", "token"],
     });
@@ -135,7 +147,11 @@ describe("egress and placement enforcement", () => {
       placement: "remote",
       data_egress: { network: true, fields: ["q"] },
     };
-    const { runtime, signal } = world(intent, { network: true });
+    const { runtime, signal } = world(intent, {
+      class: "disclose",
+      network: true,
+      fields: ["q"],
+    });
     const decision = await runtime.submit(signal, REQUESTER_PUBLIC);
     expect(decision.error).toBe("capability_unavailable");
     expect(decision.detail).toContain("placement");
@@ -148,17 +164,24 @@ describe("egress and placement enforcement", () => {
       data_egress: { network: true, fields: ["q"] },
     };
     const { runtime, signal } = world(intent, {
+      class: "disclose",
       network: true,
-      placement: ["remote"],
+      placement: ["local", "remote"],
       fields: ["q"],
     });
-    const decision = await runtime.submit(signal, REQUESTER_PUBLIC);
-    expect(decision.outcome).toBe("authorized");
+    const first = await runtime.submit(signal, REQUESTER_PUBLIC);
+    expect(first.outcome).toBe("confirmation_required");
+    const done = await runtime.confirm(first.pending_id!, true);
+    expect(done.outcome).toBe("authorized");
   });
 
   it("enforces the ceiling again on a direct host call", () => {
     const hosts = new HostRegistry();
-    hosts.registerHost("net.request", () => "ok", { network: true });
+    hosts.registerHost("net.request", () => "ok", {
+      class: "disclose",
+      network: true,
+      fields: ["q"],
+    });
     const access = hosts.access(["net.request"], {
       network: false,
       fields: new Set(),
@@ -170,14 +193,69 @@ describe("egress and placement enforcement", () => {
     const hosts = new HostRegistry();
     hosts.registerHost("store.read", () => "ok");
     expect(hosts.hostMeta("store.read")).toMatchObject({
-      network: false,
-      placement: ["local"],
-      fields: [],
+      profile: {
+        network: false,
+        placement: ["local"],
+        fields: [],
+        class: "read",
+        risk: "read",
+        minConfirmation: "none",
+      },
     });
     const access = hosts.access(["store.read"], {
       network: false,
       fields: new Set(),
     });
     expect(access.call("store.read")).toBe("ok");
+  });
+
+  it("never lets a policy admit an intent whose host needs a human", async () => {
+    const intent = {
+      ...LOCAL_INTENT,
+      data_egress: { network: true, fields: ["q"] },
+    };
+    const { runtime, grant, manifest } = world(intent, {
+      class: "disclose",
+      network: true,
+      fields: ["q"],
+    });
+    const policy = verifyAdmissionPolicy(
+      buildAdmissionPolicy(
+        {
+          version: 1,
+          default: "confirm",
+          rules: [
+            {
+              id: "r-fetch",
+              contacts: ["c-1"],
+              intents: ["example.fetch"],
+              risk: "read",
+              limits: { calls_per_hour: 5 },
+              confirmation: "none",
+              expires_at: "2027-01-01T00:00:00Z",
+            },
+          ],
+          issuedAt: "2026-10-22T00:00:00Z",
+          expiresAt: "2027-01-01T00:00:00Z",
+        },
+        Uint8Array.from({ length: 32 }, (_, index) => index + 96)
+      ),
+      { now: NOW }
+    );
+
+    const outcome = await runtime.admitRequest({
+      policy,
+      manifest,
+      request: {
+        requesterKey: grant.requester_key,
+        contactId: "c-1",
+        intent: "example.fetch",
+        risk: "read",
+        now: NOW,
+      },
+    });
+    expect(outcome.result.decision).toBe("deny");
+    expect(outcome.result.reason).toBe("risk_not_admittable");
+    expect(outcome.grant).toBeUndefined();
   });
 });
