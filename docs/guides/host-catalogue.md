@@ -30,6 +30,9 @@ responsible for its contract, and high-risk hosts require an independent
 review before deployment. Every extension host must declare a class; the
 runtime refuses to register it otherwise.
 
+No payment host or intent is planned for 1.0. The payment rows are a design
+sketch for a possible extension profile.
+
 | Host | Class | Risk | Floor | Idempotency | Placement | Egress |
 | --- | --- | --- | --- | --- | --- | --- |
 | `payment.address.resolve` | read | read | none | pure | local | none |
@@ -50,6 +53,14 @@ admit the intent unattended is refused with `risk_not_admittable`.
 
 The machine-readable form of this table is `test-vectors/v5/hosts.json`;
 all three runtimes validate it, so a profile cannot drift between languages.
+
+### Intent vs host names
+
+The table lists host identifiers. `payment.address.resolve` is a host name
+here; §21.1 reuses the same string as an illustrative intent. That collision
+is a sketch, not a naming precedent. A future extension profile should use
+`wallet.*` host names, keep intents in their own namespace, and add a v6
+vector suite rather than editing v5.
 
 ### Review questions (Appendix B)
 

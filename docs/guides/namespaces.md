@@ -48,10 +48,13 @@ case-folding collisions in permission cards and logs.
 ### Valid
 
 ```
-ccp.payment.address.resolve
+ccp.core.read
 com.example.mail.search
 io.acme.calendar.read
 ```
+
+The `ccp.core.read` line is a syntax illustration; no core intent is frozen
+yet.
 
 ### Invalid
 
@@ -74,8 +77,9 @@ not implement the named intent MUST reject it (fail closed); it MUST NOT
 execute an unknown `ccp.*` intent because a signed manifest listed it.
 
 The current draft's worked examples (`payment.address.resolve`, etc.) are
-illustrative. If they are promoted to the core profile, they move under
-`ccp.*` (for example `ccp.payment.address.resolve`).
+illustrative and are not core intents. Payment intents remain illustrative
+until a profile promotes them; no payment intent is defined or planned for
+1.0. If an example is promoted to the core profile, it moves under `ccp.*`.
 
 ### Publisher: reverse-domain
 
@@ -124,8 +128,8 @@ If a core registry exists, it owns only the `ccp.*` namespace and:
 
 - **Ownership:** a named maintainer group, with a documented change process.
 - **Review tiers:** read/control intents need a lightweight review; write,
-  egress, compute, and high-impact intents (payments, device control) need a
-  stricter, independent review (§19.2, §26.4).
+  egress, compute, and high-impact intents (transaction submission, device
+  control) need a stricter, independent review (§19.2, §26.4).
 - **Deprecation:** announce, publish a sunset window, and keep the vector
   suites covering the name until retirement.
 - **Compatibility:** additive changes only; breaking changes get a new name.

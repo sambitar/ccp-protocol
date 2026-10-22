@@ -53,6 +53,10 @@ subset, with the limit named; **no** = not implemented.
 - The reference runtime is TypeScript; Python and Rust mirror it.
 - `ccp-runtime` has no HTTP, MCP, or FFI layer. The kernel keeps the portable
   C ABI and WASM role; the runtime is host-side and transport-independent.
+- Payment is a non-normative motivation (§2.1). No payment rail, transfer
+  execution, or payment host is in the profile; the payment rows in
+  [`guides/host-catalogue.md`](guides/host-catalogue.md) are a design sketch
+  for a possible extension profile, not planned 1.0 work.
 
 ## Updating this table
 

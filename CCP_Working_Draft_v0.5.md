@@ -16,9 +16,9 @@ under the user's control.
 > already-installed capability within explicit limits.
 
 This draft develops the original CCP v0.1 concept and incorporates
-lessons from a working messenger payment flow. It is intentionally
-explicit about what is a protocol requirement, what is an implementation
-choice, and what remains unresolved.
+lessons from a working messenger flow that discloses a payment address. It
+is intentionally explicit about what is a protocol requirement, what is an
+implementation choice, and what remains unresolved.
 
 ------------------------------------------------------------------------
 
@@ -77,10 +77,10 @@ operation, approve the permitted authority, enforce it in a trusted
 runtime, and return only the result authorized by the operation's
 schema.
 
-### 2.1 The motivating payment flow
+### 2.1 Non-normative motivation
 
-The original use case comes from a messenger with locally controlled
-wallets:
+The motivating example is a messenger with locally controlled wallets.
+It is an illustration, not a shipped payment feature:
 
 1.  A sender chooses a trustee, enters an amount such as `1 USDC`, and
     presses **Send**.
@@ -102,23 +102,28 @@ interface.
 
 It does not mean the address is secret if it is already known, nor does
 it prevent someone from sending funds directly on a public blockchain
-outside this app. It also does not mean libsignal itself executes
-payments: the encrypted channel carries the request and response; wallet
-and application code coordinate the transfer.
+outside this app. Knowing or receiving the address does not authorize a
+transfer through this or any other application. It also does not mean
+libsignal itself executes payments: the encrypted channel carries the
+request and response; wallet and application code coordinate the
+transfer.
 
 The flow above is the **pull** profile: a request triggers consent and a
-response. A **push** profile — standing consent, then a later disclosure
-or announcement — uses the same grant record but has no request at
-disclosure time. The initial profile standardizes only
-`payment.address.resolve` (§25.6); preparing or submitting a transfer
-belongs to a separately reviewed extension. This illustration describes
+response; Hush, the origin implementation, uses the **push** profile
+(standing bilateral consent plus a later address announcement, with no
+request at disclosure time). Both profiles use the same grant record;
+the difference is when consent is obtained.
+
+Neither profile is part of the initial core profile.
+`payment.address.resolve` is an illustrative intent (§21.1, §25.6), and
+`payment.prepare` and `payment.submit` are not planned for 1.0. This is
 the generalized pattern, not a shipped payment flow. The runnable
 reference is `docs/quickstart.md`.
 
-CCP generalizes the pattern beyond payments. A capability might search a
-local folder, summarize selected email, retrieve a file, request a
-payment, or operate a device. Each capability must define exactly what
-it permits and what it exposes.
+CCP generalizes the pattern beyond the payment example. A capability
+might search a local folder, summarize selected email, retrieve a file,
+request a payment, or operate a device. Each capability must define
+exactly what it permits and what it exposes.
 
 ## 3. Design principles
 
@@ -170,8 +175,8 @@ CCP does not, by itself:
     decision. §25.8 fixes a self-certifying document format and the
     introduction sequence; which identities a person trusts remains a
     local decision (§7.3).
--   Define a payment rail, cryptocurrency, wallet, banking service, or
-    financial compliance regime.
+-   Define a payment rail, cryptocurrency, wallet, banking service,
+    transfer execution, custody model, or financial compliance regime.
 -   Guarantee that a recipient's data is private from a remote executor
     when it is sent there.
 -   Guarantee anonymity or hide all network metadata.
@@ -206,8 +211,8 @@ CCP does not, by itself:
                                       is not, by itself, a permission.
 
   **Capability**                      An operation exposed by a runtime,
-                                      such as `payment.address.resolve`
-                                      or `files.search`.
+                                      such as `files.search` or
+                                      `calendar.read`.
 
   **Intent**                          A named request operation in a
                                       manifest.
@@ -231,8 +236,8 @@ CCP does not, by itself:
 
   **Host function**                   A privileged operation exposed by
                                       the runtime, such as reading an
-                                      approved file or submitting a
-                                      payment.
+                                      approved file or operating a
+                                      device.
 
   **Executor**                        The environment where the
                                       capability runs: local device,
@@ -712,17 +717,21 @@ Capabilities use host functions exposed by the runtime, such as:
     destination.
 -   `notify` --- show a notification.
 -   `confirm` --- request a human decision through trusted UI.
--   `payment.prepare` / `payment.submit` --- prepare or submit a
-    transaction, if supported by the client.
+-   `wallet.address.read` --- read a wallet address the user has
+    approved for disclosure.
+-   `wallet.transaction.prepare` / `wallet.transaction.submit` ---
+    prepare or submit a transaction, if the client supports it.
 -   `device.operation` --- invoke a specific device function.
 -   `model.infer` --- invoke a local or declared remote model.
 -   `audit.append` --- write a runtime-controlled audit event.
 
 §26.4 finalizes a minimal core set for the initial profile; the remaining
-names above belong to extension profiles. Each host function needs a
-precise contract, input/output schema, side-effect definition, and
-permission scope. High-risk functions such as payment submission must be
-distinct from read-only discovery or transaction preparation.
+names above belong to extension profiles. The wallet functions in
+particular are extension-only and are not part of the initial profile.
+Each host function needs a precise contract, input/output schema,
+side-effect definition, and permission scope. High-risk functions such as
+transaction submission must be distinct from read-only discovery or
+transaction preparation.
 
 ### 11.3 Isolation and resource limits
 
@@ -1143,7 +1152,7 @@ later discloses or announces).
 ### 21.1 Messenger payment address disclosure
 
 **Intent:** `payment.address.resolve`
-**Profile:** pull.
+**Profile:** pull, illustrative.
 
 The sender requests the recipient's current address for a specified
 payment flow. The recipient's client checks the recipient's local grant
@@ -1151,10 +1160,17 @@ before returning it. If the recipient has disabled payment requests, the
 runtime rejects the request and does not disclose the address through
 this flow.
 
+**Push variant (Hush, origin implementation).** Consent is already
+granted. The holder announces the address to the contact. No
+request/response occurs at disclosure time. The client still checks the
+standing grant before announcing. Returning or announcing the address is
+not authorization to transfer.
+
 The address-resolution capability is distinct from `payment.prepare` and
-`payment.submit`. Returning an address is not the same as authorizing or
-executing a transfer. A wallet may require transaction preview and
-explicit confirmation before signing or submitting funds.
+`payment.submit`, which are not planned for 1.0. Returning an address is
+not the same as authorizing or executing a transfer. A wallet may require
+transaction preview and explicit confirmation before signing or
+submitting funds.
 
 **Boundary:** this controls the application's disclosure and
 authorization path. It cannot prevent a transfer initiated through
@@ -1227,8 +1243,8 @@ resolves it:
 11. **Code extensions:** declarative-only for now; WASM deferred — §25.5.
 12. **Governance and licensing:** specification/reference licences,
     change process, registry policy — §26.8.
-13. **Payment scope:** address resolution as core candidate, transfers as
-    extension — §25.6.
+13. **Payment scope:** illustrative only; no payment host or intent is in
+    the initial profile. Transfers are not planned for 1.0 — §2.1, §25.6.
 14. **Privacy claims:** guaranteed vs implementation-dependent — §26.7.
 
 A later standards-track revision should convert these resolutions into
@@ -1249,9 +1265,10 @@ independent implementation (§18, §23).
 
 ### Phase 2 --- Document the existing messenger flow
 
--   Describe the actual permission decision and where it is enforced.
--   Test that a denied request cannot cause the recipient client to
-    disclose the address through the supported flow.
+-   Describe Hush's **push** flow (standing consent, later address
+    announcement) and the **pull** request/response illustration.
+-   Test that denied consent cannot cause the recipient client to
+    disclose the address in either flow.
 -   Test permission changes, stale requests, replay, key changes, and
     offline/retry behavior.
 -   Keep address resolution separate from wallet signing and transaction
@@ -1273,8 +1290,8 @@ independent implementation (§18, §23).
 
 ### Phase 5 --- Expand carefully
 
--   Add a small number of useful capabilities beyond payments,
-    preferably low-risk local operations first.
+-   Add a small number of useful capabilities beyond the core
+    read/control set, preferably low-risk local operations first.
 -   Develop a remote-execution profile only after data-egress semantics
     are enforceable.
 -   Commission independent security review before high-impact
@@ -1428,10 +1445,13 @@ property `item_id` and `additionalProperties` set to `false`.
 
 -   The core profile standardizes low-risk read/query-class intents
     first (§19.2).
--   `payment.address.resolve` is a candidate core intent: it discloses a
-    handle and does not authorize or execute a transfer (§21.1).
--   `payment.prepare`, `payment.submit`, and other side-effecting
-    intents belong to a separately reviewed extension profile.
+-   `payment.address.resolve` is an illustrative intent, not a 1.0 core
+    intent: it discloses a handle and does not authorize or execute a
+    transfer (§21.1).
+-   `payment.prepare` and `payment.submit` are not planned for 1.0. A
+    future, separately reviewed extension profile may define wallet hosts;
+    this draft does not.
+-   The core host table (§26.4) contains no payment or wallet host.
 
 ### 25.7 HTTP transport binding
 
@@ -1846,9 +1866,12 @@ definition, and permission scope.
 | `confirm` | request a decision through trusted UI | control |
 | `audit.append` | write a runtime-controlled audit event | control |
 
-High-risk functions (`files.write`, `net.request`, `payment.prepare`,
-`payment.submit`, `device.operation`, `model.infer`) belong to extension
-profiles, not the core, and each requires its own review (§19.2, §25.6).
+High-risk host functions (`files.write`, `net.request`,
+`wallet.transaction.prepare`, `wallet.transaction.submit`,
+`device.operation`, `model.infer`) belong to extension profiles, not the
+core, and each requires its own review (§19.2, §25.6). `payment.prepare`
+and `payment.submit` are not planned for 1.0; any transaction support must
+arrive through a separately reviewed extension profile, not this draft.
 A runtime MUST reject an intent whose host functions are not in the
 installed catalogue.
 
