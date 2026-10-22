@@ -1,0 +1,132 @@
+{
+  "ccp": "0.4-draft",
+  "rule": "strict canonical JSON, adversarial edges (§25.1)",
+  "vectors": [
+    {
+      "id": "cj2-001",
+      "name": "sort by code point across the astral plane",
+      "document": "{\"\\ud83d\\ude00\":1,\"\\uffff\":2,\"a\":3}",
+      "expected_canonical": "{\"a\":3,\"￿\":2,\"😀\":1}"
+    },
+    {
+      "id": "cj2-002",
+      "name": "NFD key normalizes to NFC",
+      "document": "{\"e\\u0301\":1}",
+      "expected_canonical": "{\"é\":1}"
+    },
+    {
+      "id": "cj2-003",
+      "name": "NFD value normalizes to NFC",
+      "document": "{\"a\":\"e\\u0301\"}",
+      "expected_canonical": "{\"a\":\"é\"}"
+    },
+    {
+      "id": "cj2-004",
+      "name": "keys that collapse under NFC are duplicates",
+      "document": "{\"e\\u0301\":1,\"\\u00e9\":2}",
+      "expect_error": "duplicate"
+    },
+    {
+      "id": "cj2-005",
+      "name": "escaped key duplicate",
+      "document": "{\"a\":1,\"\\u0061\":2}",
+      "expect_error": "duplicate"
+    },
+    {
+      "id": "cj2-006",
+      "name": "negative zero is negative",
+      "document": "{\"n\":-0}",
+      "expect_error": "negative"
+    },
+    {
+      "id": "cj2-007",
+      "name": "negative zero float is negative",
+      "document": "{\"n\":-0.0}",
+      "expect_error": "negative"
+    },
+    {
+      "id": "cj2-008",
+      "name": "lone high surrogate",
+      "document": "{\"a\":\"\\ud800\"}",
+      "expect_error": "malformed"
+    },
+    {
+      "id": "cj2-009",
+      "name": "lone low surrogate",
+      "document": "{\"a\":\"\\udc00\"}",
+      "expect_error": "malformed"
+    },
+    {
+      "id": "cj2-010",
+      "name": "high surrogate followed by a non-low code",
+      "document": "{\"a\":\"\\ud800\\u0041\"}",
+      "expect_error": "malformed"
+    },
+    {
+      "id": "cj2-011",
+      "name": "valid surrogate pair becomes one literal character",
+      "document": "{\"a\":\"\\ud83d\\ude00\"}",
+      "expected_canonical": "{\"a\":\"😀\"}"
+    },
+    {
+      "id": "cj2-012",
+      "name": "nested signature is sorted normally",
+      "document": "{\"outer\":{\"z\":1,\"signature\":\"x\"}}",
+      "expected_canonical": "{\"outer\":{\"signature\":\"x\",\"z\":1}}"
+    },
+    {
+      "id": "cj2-013",
+      "name": "top-level signature is last",
+      "document": "{\"signature\":\"x\",\"b\":1,\"a\":2}",
+      "expected_canonical": "{\"a\":2,\"b\":1,\"signature\":\"x\"}"
+    },
+    {
+      "id": "cj2-014",
+      "name": "prototype-shaped key is ordinary data",
+      "document": "{\"__proto__\":{\"x\":1},\"a\":2}",
+      "expected_canonical": "{\"__proto__\":{\"x\":1},\"a\":2}"
+    },
+    {
+      "id": "cj2-015",
+      "name": "integer beyond 2^64 round-trips exactly",
+      "document": "{\"n\":18446744073709551616}",
+      "expected_canonical": "{\"n\":18446744073709551616}"
+    },
+    {
+      "id": "cj2-016",
+      "name": "exponent is a float",
+      "document": "{\"n\":1e3}",
+      "expect_error": "float"
+    },
+    {
+      "id": "cj2-017",
+      "name": "control escapes use lowercase hex",
+      "document": "{\"a\":\"\\u001F\"}",
+      "expected_canonical": "{\"a\":\"\\u001f\"}"
+    },
+    {
+      "id": "cj2-018",
+      "name": "solidus is literal",
+      "document": "{\"a\":\"\\\"\\\\\\/\"}",
+      "expected_canonical": "{\"a\":\"\\\"\\\\/\"}"
+    },
+    {
+      "id": "cj2-019",
+      "name": "U+007F is literal",
+      "document": "{\"a\":\"\\u007f\"}",
+      "expected_canonical": "{\"a\":\"\"}"
+    },
+    {
+      "id": "cj2-020",
+      "name": "leading BOM is malformed",
+      "document": "﻿{\"a\":1}",
+      "expect_error": "malformed"
+    },
+    {
+      "id": "cj2-021",
+      "name": "sort normalized keys by code point",
+      "document": "{\"e\\u0301\":1,\"f\":2}",
+      "expected_canonical": "{\"f\":2,\"é\":1}"
+    }
+  ]
+}

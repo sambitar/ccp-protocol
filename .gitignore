@@ -1,0 +1,24 @@
+__pycache__/
+*.py[cod]
+
+node_modules/
+dist/
+coverage/
+.vitest/
+*.tsbuildinfo
+
+# Rust build output
+target/
+
+# Kotlin build output
+bindings/kotlin/lib/
+bindings/kotlin/out/
+bindings/kotlin/android/jniLibs/
+
+# Swift build output
+.build/
+bindings/swift/Sources/CCcpKernel/ccp.h
+
+# Python build output
+build/
+*.egg-info/

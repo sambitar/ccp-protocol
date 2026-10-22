@@ -1,0 +1,18 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": ".",
+    "baseUrl": ".",
+    "allowImportingTsExtensions": true,
+    "paths": {
+      "ccp-core": ["./src/index.ts"],
+      "ccp-core/express": ["./src/adapters/express.ts"],
+      "ccp-core/next": ["./src/adapters/next.ts"],
+      "ccp-core/react": ["./src/adapters/react.ts"],
+      "ccp-core/mcp": ["./src/adapters/mcp.ts"],
+      "ccp-core/node": ["./src/node/sqlite.ts"]
+    }
+  },
+  "include": ["src", "test", "examples"]
+}

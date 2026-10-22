@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ccp-protocol"
+version = "0.5.0"
+description = "Reference runtime and SDK for the Capability Contacts Protocol"
+readme = "README.md"
+license = {text = "Apache-2.0"}
+requires-python = ">=3.10"
+dependencies = ["cryptography>=41"]
+keywords = ["capability", "security", "protocol", "ed25519", "ai-agents"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Security",
+]
+
+[project.optional-dependencies]
+fastapi = ["fastapi>=0.110"]
+mcp = ["mcp>=2"]
+dev = ["fastapi>=0.110", "httpx>=0.27", "mcp>=2"]
+
+[tool.setuptools.packages.find]
+include = ["ccp*"]

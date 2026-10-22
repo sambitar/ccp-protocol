@@ -1,0 +1,117 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rust:
+    name: Rust kernel + C/WASM
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+          components: clippy, rustfmt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Format check
+        run: cargo fmt --manifest-path kernel/Cargo.toml --check
+      - name: Clippy
+        run: cargo clippy --manifest-path kernel/Cargo.toml --all-targets -- -D warnings
+      - name: Tests
+        run: cargo test --manifest-path kernel/Cargo.toml
+      - name: Native release build
+        run: cargo build --release --manifest-path kernel/Cargo.toml
+      - name: C smoke test
+        run: |
+          cc -Wall -Wextra -I kernel/include \
+            kernel/c-tests/smoke.c kernel/target/release/libccp_kernel.a \
+            -lpthread -ldl -lm -o /tmp/ccp-smoke && /tmp/ccp-smoke
+      - name: WASM build
+        run: cargo build --release --target wasm32-unknown-unknown --manifest-path kernel/Cargo.toml
+      - name: JS binding vectors
+        run: node bindings/js/test.mjs
+
+  typescript:
+    name: TypeScript SDK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: sdk/typescript/package-lock.json
+      - run: npm ci
+        working-directory: sdk/typescript
+      - name: Typecheck
+        run: npm run typecheck
+        working-directory: sdk/typescript
+      - name: Tests
+        run: npx vitest run
+        working-directory: sdk/typescript
+      - name: Build
+        run: npm run build
+        working-directory: sdk/typescript
+
+  python:
+    name: Python SDK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install
+        run: python -m pip install --upgrade pip && python -m pip install './sdk/python[dev]'
+      - name: Tests
+        run: python -m unittest discover -s tests
+        working-directory: sdk/python
+
+  go:
+    name: Go binding
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Native release build
+        run: cargo build --release --manifest-path kernel/Cargo.toml
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: bindings/go/go.mod
+      - run: go test ./...
+        working-directory: bindings/go
+
+  conformance:
+    name: Conformance and interop
+    runs-on: ubuntu-latest
+    needs: [typescript, python]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: sdk/typescript/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: npm ci
+        working-directory: sdk/typescript
+      - run: python -m pip install './sdk/python'
+      - name: Vector conformance
+        run: python conformance/run.py
+      - name: Cross-language interop
+        run: python conformance/interop.py
+
+  # The Kotlin/JVM binding is part of the release gate (docs/release.md), not
+  # PR CI: it needs a local kotlinc, JNA/Gson downloads from Maven Central,
+  # and the native release build. Enable it here once a Gradle artifact exists.

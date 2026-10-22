@@ -1,0 +1,273 @@
+{
+  "ccp": "0.5-draft",
+  "rule": "0.5 revision: dual-label compatibility and 0.5 decisions (§19.1, §10.3)",
+  "vectors": [
+    {
+      "id": "v3-001",
+      "name": "current 0.5-draft is accepted",
+      "grant": {
+        "id": "g-0001",
+        "requester_key": "key:ed25519:AAAABBBBCCCCDDDDEEEEFFFF0000111122223333",
+        "contact_id": "c-0001",
+        "manifest_digest": "sha256:abababababababababababababababababababababababababababababababab",
+        "manifest_version": 1,
+        "intents": [
+          "example.lookup"
+        ],
+        "limits": {
+          "calls_per_hour": 10
+        },
+        "created_at": "2026-10-22T10:00:00Z",
+        "expires_at": "2026-10-22T13:00:00Z",
+        "confirmation": {
+          "example.lookup": "none"
+        },
+        "capabilities": [
+          "store.read"
+        ],
+        "placement": [
+          "local"
+        ],
+        "egress": {
+          "network": false
+        },
+        "state": "active",
+        "state_reason": null
+      },
+      "signal": {
+        "ccp": "0.5-draft",
+        "request_id": "req-0001",
+        "grant_digest": "sha256:abababababababababababababababababababababababababababababababab",
+        "intent": "example.lookup",
+        "params": {
+          "item_id": "item-123"
+        },
+        "issued_at": "2026-10-22T12:00:00Z",
+        "expires_at": "2026-10-22T12:01:00Z"
+      },
+      "signer": "key:ed25519:AAAABBBBCCCCDDDDEEEEFFFF0000111122223333",
+      "context": {
+        "now": "2026-10-22T12:00:30Z",
+        "seen": [],
+        "counters": {
+          "calls_per_hour": 0
+        }
+      },
+      "expected": "authorized"
+    },
+    {
+      "id": "v3-002",
+      "name": "legacy 0.4-draft is accepted",
+      "grant": {
+        "id": "g-0001",
+        "requester_key": "key:ed25519:AAAABBBBCCCCDDDDEEEEFFFF0000111122223333",
+        "contact_id": "c-0001",
+        "manifest_digest": "sha256:abababababababababababababababababababababababababababababababab",
+        "manifest_version": 1,
+        "intents": [
+          "example.lookup"
+        ],
+        "limits": {
+          "calls_per_hour": 10
+        },
+        "created_at": "2026-10-22T10:00:00Z",
+        "expires_at": "2026-10-22T13:00:00Z",
+        "confirmation": {
+          "example.lookup": "none"
+        },
+        "capabilities": [
+          "store.read"
+        ],
+        "placement": [
+          "local"
+        ],
+        "egress": {
+          "network": false
+        },
+        "state": "active",
+        "state_reason": null
+      },
+      "signal": {
+        "ccp": "0.4-draft",
+        "request_id": "req-0001",
+        "grant_digest": "sha256:abababababababababababababababababababababababababababababababab",
+        "intent": "example.lookup",
+        "params": {
+          "item_id": "item-123"
+        },
+        "issued_at": "2026-10-22T12:00:00Z",
+        "expires_at": "2026-10-22T12:01:00Z"
+      },
+      "signer": "key:ed25519:AAAABBBBCCCCDDDDEEEEFFFF0000111122223333",
+      "context": {
+        "now": "2026-10-22T12:00:30Z",
+        "seen": [],
+        "counters": {
+          "calls_per_hour": 0
+        }
+      },
+      "expected": "authorized"
+    },
+    {
+      "id": "v3-003",
+      "name": "unknown label is rejected",
+      "grant": {
+        "id": "g-0001",
+        "requester_key": "key:ed25519:AAAABBBBCCCCDDDDEEEEFFFF0000111122223333",
+        "contact_id": "c-0001",
+        "manifest_digest": "sha256:abababababababababababababababababababababababababababababababab",
+        "manifest_version": 1,
+        "intents": [
+          "example.lookup"
+        ],
+        "limits": {
+          "calls_per_hour": 10
+        },
+        "created_at": "2026-10-22T10:00:00Z",
+        "expires_at": "2026-10-22T13:00:00Z",
+        "confirmation": {
+          "example.lookup": "none"
+        },
+        "capabilities": [
+          "store.read"
+        ],
+        "placement": [
+          "local"
+        ],
+        "egress": {
+          "network": false
+        },
+        "state": "active",
+        "state_reason": null
+      },
+      "signal": {
+        "ccp": "0.6-draft",
+        "request_id": "req-0001",
+        "grant_digest": "sha256:abababababababababababababababababababababababababababababababab",
+        "intent": "example.lookup",
+        "params": {
+          "item_id": "item-123"
+        },
+        "issued_at": "2026-10-22T12:00:00Z",
+        "expires_at": "2026-10-22T12:01:00Z"
+      },
+      "signer": "key:ed25519:AAAABBBBCCCCDDDDEEEEFFFF0000111122223333",
+      "context": {
+        "now": "2026-10-22T12:00:30Z",
+        "seen": [],
+        "counters": {
+          "calls_per_hour": 0
+        }
+      },
+      "expected": "invalid_request"
+    },
+    {
+      "id": "v3-004",
+      "name": "replay under 0.5-draft",
+      "grant": {
+        "id": "g-0001",
+        "requester_key": "key:ed25519:AAAABBBBCCCCDDDDEEEEFFFF0000111122223333",
+        "contact_id": "c-0001",
+        "manifest_digest": "sha256:abababababababababababababababababababababababababababababababab",
+        "manifest_version": 1,
+        "intents": [
+          "example.lookup"
+        ],
+        "limits": {
+          "calls_per_hour": 10
+        },
+        "created_at": "2026-10-22T10:00:00Z",
+        "expires_at": "2026-10-22T13:00:00Z",
+        "confirmation": {
+          "example.lookup": "none"
+        },
+        "capabilities": [
+          "store.read"
+        ],
+        "placement": [
+          "local"
+        ],
+        "egress": {
+          "network": false
+        },
+        "state": "active",
+        "state_reason": null
+      },
+      "signal": {
+        "ccp": "0.5-draft",
+        "request_id": "req-0001",
+        "grant_digest": "sha256:abababababababababababababababababababababababababababababababab",
+        "intent": "example.lookup",
+        "params": {
+          "item_id": "item-123"
+        },
+        "issued_at": "2026-10-22T12:00:00Z",
+        "expires_at": "2026-10-22T12:01:00Z"
+      },
+      "signer": "key:ed25519:AAAABBBBCCCCDDDDEEEEFFFF0000111122223333",
+      "context": {
+        "now": "2026-10-22T12:00:30Z",
+        "seen": [
+          "req-0001"
+        ],
+        "counters": {
+          "calls_per_hour": 0
+        }
+      },
+      "expected": "replay_detected"
+    },
+    {
+      "id": "v3-005",
+      "name": "expired grant under 0.5-draft",
+      "grant": {
+        "id": "g-0001",
+        "requester_key": "key:ed25519:AAAABBBBCCCCDDDDEEEEFFFF0000111122223333",
+        "contact_id": "c-0001",
+        "manifest_digest": "sha256:abababababababababababababababababababababababababababababababab",
+        "manifest_version": 1,
+        "intents": [
+          "example.lookup"
+        ],
+        "limits": {
+          "calls_per_hour": 10
+        },
+        "created_at": "2026-10-22T10:00:00Z",
+        "expires_at": "2026-10-22T13:00:00Z",
+        "confirmation": {
+          "example.lookup": "none"
+        },
+        "capabilities": [
+          "store.read"
+        ],
+        "placement": [
+          "local"
+        ],
+        "egress": {
+          "network": false
+        },
+        "state": "active",
+        "state_reason": null
+      },
+      "signal": {
+        "ccp": "0.5-draft",
+        "request_id": "req-0001",
+        "grant_digest": "sha256:abababababababababababababababababababababababababababababababab",
+        "intent": "example.lookup",
+        "params": {
+          "item_id": "item-123"
+        },
+        "issued_at": "2026-10-22T12:00:00Z",
+        "expires_at": "2026-10-22T12:01:00Z"
+      },
+      "signer": "key:ed25519:AAAABBBBCCCCDDDDEEEEFFFF0000111122223333",
+      "context": {
+        "now": "2026-10-22T13:00:00Z",
+        "seen": [],
+        "counters": {
+          "calls_per_hour": 0
+        }
+      },
+      "expected": "grant_expired"
+    }
+  ]
+}

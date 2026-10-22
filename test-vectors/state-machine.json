@@ -1,0 +1,66 @@
+{
+  "ccp": "0.4-draft",
+  "rule": "side-effect state machine (§26.3)",
+  "vectors": [
+    {
+      "id": "sm-001",
+      "from": "start",
+      "event": "arrive",
+      "to": "received"
+    },
+    {
+      "id": "sm-002",
+      "from": "received",
+      "event": "validate_ok",
+      "to": "authorized"
+    },
+    {
+      "id": "sm-003",
+      "from": "authorized",
+      "event": "confirmation_required",
+      "to": "awaiting_confirmation"
+    },
+    {
+      "id": "sm-004",
+      "from": "authorized",
+      "event": "no_confirmation",
+      "to": "executing"
+    },
+    {
+      "id": "sm-005",
+      "from": "awaiting_confirmation",
+      "event": "approved",
+      "to": "executing"
+    },
+    {
+      "id": "sm-006",
+      "from": "awaiting_confirmation",
+      "event": "denied",
+      "to": "cancelled"
+    },
+    {
+      "id": "sm-007",
+      "from": "executing",
+      "event": "succeeded",
+      "to": "completed"
+    },
+    {
+      "id": "sm-008",
+      "from": "executing",
+      "event": "failed",
+      "to": "failed"
+    },
+    {
+      "id": "sm-009",
+      "from": "executing",
+      "event": "cancelled",
+      "to": "cancelled"
+    },
+    {
+      "id": "sm-010",
+      "from": "executing",
+      "event": "outcome_lost",
+      "to": "outcome_unknown"
+    }
+  ]
+}

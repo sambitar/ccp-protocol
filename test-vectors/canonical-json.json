@@ -1,0 +1,114 @@
+{
+  "ccp": "0.4-draft",
+  "rule": "strict canonical JSON (§25.1)",
+  "vectors": [
+    {
+      "id": "cj-001",
+      "name": "key sort (flat)",
+      "document": "{\"b\":1,\"a\":2}",
+      "expected_canonical": "{\"a\":2,\"b\":1}"
+    },
+    {
+      "id": "cj-002",
+      "name": "key sort (nested)",
+      "document": "{\"z\":{\"m\":1,\"a\":2},\"a\":[3,2,1]}",
+      "expected_canonical": "{\"a\":[3,2,1],\"z\":{\"a\":2,\"m\":1}}"
+    },
+    {
+      "id": "cj-003",
+      "name": "whitespace removed",
+      "document": " { \"a\" : 1 } ",
+      "expected_canonical": "{\"a\":1}"
+    },
+    {
+      "id": "cj-004",
+      "name": "non-ASCII literal",
+      "document": "{\"a\":\"é\"}",
+      "expected_canonical": "{\"a\":\"é\"}"
+    },
+    {
+      "id": "cj-005",
+      "name": "NFC precomposed",
+      "document": "{\"a\":\"\\u00e9\"}",
+      "expected_canonical": "{\"a\":\"é\"}"
+    },
+    {
+      "id": "cj-006",
+      "name": "NFC combining",
+      "document": "{\"a\":\"e\\u0301\"}",
+      "expected_canonical": "{\"a\":\"é\"}"
+    },
+    {
+      "id": "cj-007",
+      "name": "control char minimal escape",
+      "document": "{\"a\":\"line\\u000abreak\"}",
+      "expected_canonical": "{\"a\":\"line\\nbreak\"}"
+    },
+    {
+      "id": "cj-008",
+      "name": "quote and backslash",
+      "document": "{\"a\":\"x\\\"y\\\\z\"}",
+      "expected_canonical": "{\"a\":\"x\\\"y\\\\z\"}"
+    },
+    {
+      "id": "cj-009",
+      "name": "integer preserved",
+      "document": "{\"amount\":1000}",
+      "expected_canonical": "{\"amount\":1000}"
+    },
+    {
+      "id": "cj-010",
+      "name": "decimal string preserved",
+      "document": "{\"amount\":\"1.00\"}",
+      "expected_canonical": "{\"amount\":\"1.00\"}"
+    },
+    {
+      "id": "cj-011",
+      "name": "empty object",
+      "document": "{}",
+      "expected_canonical": "{}"
+    },
+    {
+      "id": "cj-012",
+      "name": "empty array",
+      "document": "[]",
+      "expected_canonical": "[]"
+    },
+    {
+      "id": "cj-013",
+      "name": "bool and null",
+      "document": "{\"a\":true,\"b\":false,\"c\":null}",
+      "expected_canonical": "{\"a\":true,\"b\":false,\"c\":null}"
+    },
+    {
+      "id": "cj-014",
+      "name": "reject float",
+      "document": "{\"a\":1.0}",
+      "expect_error": "float"
+    },
+    {
+      "id": "cj-015",
+      "name": "reject exponent",
+      "document": "{\"a\":1e3}",
+      "expect_error": "float"
+    },
+    {
+      "id": "cj-016",
+      "name": "reject negative",
+      "document": "{\"a\":-1}",
+      "expect_error": "negative"
+    },
+    {
+      "id": "cj-017",
+      "name": "reject duplicate key",
+      "document": "{\"a\":1,\"a\":2}",
+      "expect_error": "duplicate"
+    },
+    {
+      "id": "cj-018",
+      "name": "reject NaN",
+      "document": "{\"a\":NaN}",
+      "expect_error": "constant"
+    }
+  ]
+}
