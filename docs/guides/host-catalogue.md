@@ -49,7 +49,7 @@ confirmation even if the manifest claims `none`, and a policy that tries to
 admit the intent unattended is refused with `risk_not_admittable`.
 
 The machine-readable form of this table is `test-vectors/v5/hosts.json`;
-both SDKs validate it, so a profile cannot drift between languages.
+all three runtimes validate it, so a profile cannot drift between languages.
 
 ### Review questions (Appendix B)
 

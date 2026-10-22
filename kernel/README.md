@@ -12,10 +12,12 @@ counters, pending confirmations, host registry, audit log, or transport.
 It verifies and decides over values you pass in. The C ABI and WASM build
 expose the same deterministic core and nothing more.
 
-The Rust runtime does not exist yet. A Rust application that needs the
-end-to-end loop must either port it (tracked as a P1 item) or call the
-TypeScript/Python runtime. See [`../docs/implementation-status.md`](../docs/implementation-status.md)
-and the runnable kernel example in [`examples/quickstart.rs`](examples/quickstart.rs).
+The runtime lives in [`../runtime/`](../runtime). Use `ccp-kernel` when you
+need the deterministic core over values you already loaded; use
+`ccp-runtime` (crate `ccp-runtime`) when you need grants, replay, limits,
+pending confirmations, host mediation, lifecycle, or audit. See
+[`../docs/implementation-status.md`](../docs/implementation-status.md) and the
+runnable kernel example in [`examples/quickstart.rs`](examples/quickstart.rs).
 
 ## Build and test
 

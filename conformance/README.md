@@ -1,20 +1,22 @@
 # Cross-language conformance and interop
 
-Two independent implementations — `sdk/typescript` and `sdk/python` — must
-agree on the v1 contract (`test-vectors/*.json`) and the adversarial v2 set
-(`test-vectors/v2/*.json`), and must be able to verify each other's signed
-documents.
+Three independent implementations — `sdk/typescript`, `sdk/python`, and
+`runtime` — must agree on the v1 contract (`test-vectors/*.json`), the
+adversarial v2/v3 sets, the identity and admission suite (v4), and the host
+contract suite (v5), and TypeScript/Python must be able to verify each other's
+signed documents.
 
 ## Run
 
 ```sh
-/usr/bin/python3 conformance/run.py       # vector suites, both SDKs
+/usr/bin/python3 conformance/run.py       # vector suites, all three runtimes
 /usr/bin/python3 conformance/interop.py   # sign in each, verify in the other
 ```
 
-Both build the TypeScript SDK first. Pass `--skip-build` when `dist/` is
-already current. Requirements: Node 24, Python 3.10+, `cryptography` in the
-Python interpreter (use `/usr/bin/python3`).
+`run.py` builds the TypeScript SDK first and compiles the Rust harness on
+demand. Pass `--skip-build` when `dist/` is already current. Requirements:
+Node 24, Python 3.10+, `cryptography` in the Python interpreter (use
+`/usr/bin/python3`), and a Rust toolchain.
 
 ## Layout
 
@@ -24,7 +26,8 @@ Python interpreter (use `/usr/bin/python3`).
 | `sdk/typescript/conformance/interop.mjs` | TS sign/verify |
 | `sdk/python/conformance/run.py` | Python harness |
 | `sdk/python/conformance/interop.py` | Python sign/verify |
-| `run.py` | runs both harnesses over v1 and v2, compares results |
+| `runtime/src/bin/conformance.rs` | Rust harness (delegates to `ccp_runtime::vectors`) |
+| `run.py` | runs all three harnesses over v1-v5, compares results |
 | `interop.py` | orchestrates the four interop steps and byte comparison |
 
 ## Harness contract
@@ -32,11 +35,12 @@ Python interpreter (use `/usr/bin/python3`).
 ```
 node conformance/run.mjs <vectors-dir>
 python3 conformance/run.py <vectors-dir>
+cargo run --quiet --bin conformance --manifest-path runtime/Cargo.toml -- <vectors-dir>
 ```
 
-Each reads whichever of `canonical-json.json` and `validation.json` exist in
-the directory, prints one JSON object, and exits non-zero if any case
-failed:
+Each reads whichever of `canonical-json.json`, `validation.json`,
+`identity.json`, and `hosts.json` exist in the directory, prints one JSON
+object, and exits non-zero if any case failed:
 
 ```json
 {
@@ -48,8 +52,8 @@ failed:
 A failure is `{"id", "expected", "got"}`. Validation cases use the same
 fixed intent spec and params schema as the SDK vector tests.
 
-`run.py` fails if either SDK fails or if the two summaries disagree on pass
-counts or failing ids.
+`run.py` fails if any runtime fails or if the three summaries disagree on
+pass counts or failing ids.
 
 ## Interop contract
 
@@ -80,12 +84,16 @@ files to be byte-identical.
 Current result:
 
 ```
-test-vectors       canonical-json   ts 18/18  py 18/18  agree
-test-vectors       validation       ts 18/18  py 18/18  agree
-test-vectors/v2    canonical-json   ts 21/21  py 21/21  agree
-test-vectors/v2    validation       ts 17/17  py 17/17  agree
-test-vectors/v3    canonical-json   ts 3/3    py 3/3    agree
-test-vectors/v3    validation       ts 5/5    py 5/5    agree
+test-vectors       canonical-json   ts 18/18  py 18/18  rs 18/18  agree
+test-vectors       validation       ts 18/18  py 18/18  rs 18/18  agree
+test-vectors/v2    canonical-json   ts 21/21  py 21/21  rs 21/21  agree
+test-vectors/v2    validation       ts 17/17  py 17/17  rs 17/17  agree
+test-vectors/v3    canonical-json   ts 3/3    py 3/3    rs 3/3    agree
+test-vectors/v3    validation       ts 5/5    py 5/5    rs 5/5    agree
+test-vectors/v4    admission        ts 12/12  py 12/12  rs 12/12  agree
+test-vectors/v4    identity         ts 14/14  py 14/14  rs 14/14  agree
+test-vectors/v4    policy           ts 13/13  py 13/13  rs 13/13  agree
+test-vectors/v5    hosts            ts 20/20  py 20/20  rs 20/20  agree
 conformance: ok
 
 ts generate    ok
@@ -99,7 +107,14 @@ signal_signing_sha256:   identical
 interop: ok
 ```
 
-## Rust kernel
+## Rust
+
+The runtime harness runs v1-v5 through the public `ccp-runtime` surface:
+
+```sh
+cargo test --manifest-path runtime/Cargo.toml --features sqlite
+cargo run --quiet --bin conformance --manifest-path runtime/Cargo.toml -- test-vectors/v4
+```
 
 The portable kernel has its own gates (see `kernel/README.md`):
 

@@ -145,8 +145,8 @@ peer = verify_identity_document(
 )
 ```
 
-`now` defaults to the current clock in both SDKs. Pass it explicitly in
-tests and in anything that must be reproducible.
+`now` defaults to the current clock in all three runtimes. Pass it explicitly
+in tests and in anything that must be reproducible.
 
 ## Introducing a contact
 

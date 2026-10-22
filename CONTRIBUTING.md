@@ -27,6 +27,8 @@ Run the gates from the repository root before opening a pull request:
 /usr/bin/python3 -m unittest discover -s sdk/python/tests
 cd sdk/typescript && npm install && npx vitest run && npx tsc --noEmit
 cargo test --manifest-path kernel/Cargo.toml
+cargo test --manifest-path runtime/Cargo.toml --features sqlite
+cargo clippy --manifest-path runtime/Cargo.toml --all-targets --features sqlite -- -D warnings
 /usr/bin/python3 conformance/run.py
 /usr/bin/python3 conformance/interop.py
 ```
@@ -38,7 +40,7 @@ MCP adapter tests.
 
 1. Add the case to `test-vectors/v2/generate.py` and regenerate:
    `/usr/bin/python3 test-vectors/v2/generate.py`.
-2. Both SDK test suites and both conformance harnesses pick it up
+2. All SDK test suites and all three conformance harnesses pick it up
    automatically.
 3. If the implementations disagree, decide what the specification requires
    before changing either SDK. If the spec is ambiguous, fix the spec.

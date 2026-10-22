@@ -223,6 +223,38 @@ it is still marked experimental). The same atomic operations (`tryReserve`,
 `markIfNew`, `take`) run in `BEGIN IMMEDIATE` transactions. Call
 `replay.expire(timestamp)` to bound the replay table.
 
+### Rust (SQLite)
+
+`ccp_runtime::sqlite::SqliteStores` implements all six contracts over one
+rusqlite connection behind the `sqlite` feature. `:memory:` works for tests
+and a file path works across restarts. `try_reserve`, `mark_if_new`, and
+`take` run in `BEGIN IMMEDIATE` transactions.
+
+```toml
+[dependencies]
+ccp-runtime = { version = "0.5.1", features = ["sqlite"] }
+```
+
+```rust
+use ccp_runtime::sqlite::SqliteStores;
+use ccp_runtime::{Runtime, RuntimeOptions};
+
+let stores = SqliteStores::open("ccp.db")?;
+let mut runtime = Runtime::new(RuntimeOptions {
+    grants: Some(Box::new(stores.grants)),
+    manifests: Some(Box::new(stores.manifests)),
+    replay: Some(Box::new(stores.replay)),
+    limits: Some(Box::new(stores.limits)),
+    pending: Some(Box::new(stores.pending)),
+    audit: Some(Box::new(stores.audit)),
+    ..RuntimeOptions::default()
+});
+```
+
+The Rust runtime is synchronous and takes `&mut self`; it is the same store
+contract without the `Awaitable<T>` colouring. Revocation and pending
+confirmations survive a restart; see `runtime/tests/sqlite.rs`.
+
 ## Operational notes
 
 - Memory stores are single-process only. Two instances behind a load
