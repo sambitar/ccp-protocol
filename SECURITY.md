@@ -20,7 +20,7 @@ operations) without an independent review of your deployment.
 Report suspected vulnerabilities privately to the maintainer. Do not open a
 public issue with exploit details. Include:
 
-- the affected implementation (spec, TS, Python, Rust kernel, binding),
+- the affected implementation (spec, TS, Python, Rust kernel or runtime, binding),
 - the smallest reproduction you can produce,
 - the invariant or threat you believe is violated (Appendix A / §17),
 - whether the issue is in the protocol, an implementation, an adapter, or

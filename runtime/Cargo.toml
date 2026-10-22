@@ -1,0 +1,31 @@
+[package]
+name = "ccp-runtime"
+version = "0.5.1"
+edition = "2021"
+description = "Rust runtime for CCP: grants, confirmation, replay, limits, hosts, identity, audit"
+readme = "README.md"
+keywords = ["capability", "security", "protocol", "ed25519"]
+categories = ["authentication"]
+license = "Apache-2.0"
+documentation = "https://github.com/sambitar/ccp-protocol/tree/main/runtime"
+homepage = "https://github.com/sambitar/ccp-protocol"
+repository = "https://github.com/sambitar/ccp-protocol"
+
+[lib]
+name = "ccp_runtime"
+
+[dependencies]
+# The kernel does not re-export its BigUint or base64 helpers. The runtime needs
+# them to build integer Values and decode key:ed25519: identifiers.
+base64 = "0.22"
+ccp-kernel = { path = "../kernel", version = "0.5.1" }
+num-bigint = "0.4"
+num-traits = "0.2"
+rusqlite = { version = "0.32", features = ["bundled"], optional = true }
+
+[features]
+default = []
+sqlite = ["dep:rusqlite"]
+
+[profile.release]
+panic = "abort"

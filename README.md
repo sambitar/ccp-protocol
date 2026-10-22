@@ -15,16 +15,17 @@ never carry executable code.
 - **Specification:** [`CCP_Working_Draft_v0.5.md`](CCP_Working_Draft_v0.5.md)
   (working draft; not final)
 - **Status:** reference implementations at 0.5.1. PyPI (`ccp-protocol`) and
-  crates.io (`ccp-kernel`) are published; npm `ccp-core` awaits an
-  interactive publish. Not security-audited.
+  crates.io (`ccp-kernel`) are published. npm `ccp-core` and the new
+  `ccp-runtime` crate await publishing. Not security-audited.
 
 ## Repository map
 
 | Path | Contents |
 | --- | --- |
 | `CCP_Working_Draft_v0.5.md` | The protocol specification |
-| `test-vectors/` | Frozen conformance vectors: v1 base, v2 adversarial, v3 dual-label, v4 identity and admission |
+| `test-vectors/` | Frozen conformance vectors: v1 base, v2 adversarial, v3 dual-label, v4 identity and admission, v5 host contracts |
 | `kernel/` | Rust kernel with a C ABI and WASM build |
+| `runtime/` | `ccp-runtime` Rust runtime: grants, replay, limits, confirmation, hosts, identity, audit, SQLite |
 | `sdk/typescript/` | `ccp-core` TypeScript SDK and framework adapters |
 | `sdk/python/` | `ccp-protocol` Python SDK and FastAPI/MCP adapters |
 | `bindings/` | Go, JS, Kotlin, and Swift bindings over the kernel |
@@ -38,8 +39,15 @@ never carry executable code.
 
 ## Quick start
 
-Start with [`docs/quickstart.md`](docs/quickstart.md): one page, the same
-five-step loop in TypeScript, Python, and Rust, with runnable sources.
+The Rust runtime is a complete implementation:
+
+```sh
+cargo run --example quickstart --manifest-path runtime/Cargo.toml
+```
+
+The TypeScript and Python lanes are complete loops; the Rust lane runs the
+same loop through `ccp-runtime` and also ships the kernel example. See
+[`docs/quickstart.md`](docs/quickstart.md).
 
 Provider (Node + Express):
 
@@ -63,8 +71,9 @@ cd sdk/typescript
 npm run mcp:demo
 ```
 
-Role-level API examples live in [`sdk/typescript/README.md`](sdk/typescript/README.md)
-and [`sdk/python/README.md`](sdk/python/README.md).
+Role-level API examples live in [`sdk/typescript/README.md`](sdk/typescript/README.md),
+[`sdk/python/README.md`](sdk/python/README.md), and
+[`runtime/README.md`](runtime/README.md).
 
 ## Verify
 
@@ -79,6 +88,10 @@ cd sdk/typescript && npm install && npx vitest run && npx tsc --noEmit
 
 # Rust kernel
 cargo test --manifest-path kernel/Cargo.toml
+
+# Rust runtime
+cargo test --manifest-path runtime/Cargo.toml --features sqlite
+cargo run --example quickstart --manifest-path runtime/Cargo.toml
 
 # Cross-language conformance and interop
 /usr/bin/python3 conformance/run.py

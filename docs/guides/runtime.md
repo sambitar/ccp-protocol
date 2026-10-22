@@ -124,6 +124,49 @@ The model helpers (`grant.pause()`, `grant.suspend()`, `grant.resume()`,
 do not persist; call the runtime methods instead. Limits are at
 `runtime.limits.counters("g-1")`; audit events at `runtime.audit.events()`.
 
+## Rust
+
+```rust
+use ccp_runtime::{
+    HostRegistry, MemoryGrantStore, MemoryManifestStore, Runtime, RuntimeOptions,
+    SchemaRegistry,
+};
+
+let mut runtime = Runtime::new(RuntimeOptions {
+    grants: Some(Box::new(MemoryGrantStore::new(vec![grant]))),
+    manifests: Some(Box::new(MemoryManifestStore::new(vec![manifest]))),
+    schemas: Some(schemas),
+    hosts: Some(hosts),
+    ..RuntimeOptions::default()
+});
+
+let decision = runtime.submit(&signal_document, &requester_public_key);
+if decision.outcome == "confirmation_required" {
+    runtime.confirm(decision.pending_id.as_deref().unwrap(), true);
+}
+```
+
+The runtime is synchronous and mutating methods take `&mut self`; callers own
+concurrency. Lifecycle and admission mirror the other runtimes:
+
+```rust
+runtime.pause_grant("g-1", Some("temporary stop"))?;
+runtime.suspend_grant("g-1", Some("key changed"))?;
+runtime.resume_grant("g-1")?;
+runtime.revoke_grant("g-1", Some("user asked"))?;
+runtime.suspend_contact("c-1", Some("review"));
+
+let outcome = runtime.admit_request(&policy, &request, &manifest);
+// outcome.result.decision is allow/confirm/deny; outcome.grant is set on allow
+
+runtime.verify_contact_identity(&document, &options)?;
+// A key change returns identity_changed and suspends the contact's grants.
+```
+
+Limits are at `runtime.limits.counters("g-1")`. A `MemoryAuditLog` exposes
+`events()`; `ccp_runtime::sqlite::SqliteAuditLog` does the same for durable
+stores.
+
 ## Rules that matter
 
 - A manifest never authorizes; only a stored grant does.
@@ -139,4 +182,5 @@ do not persist; call the runtime methods instead. Limits are at
 ```sh
 cd sdk/typescript && npx vitest run test/runtime.test.ts test/runtime-stores.test.ts
 cd sdk/python && /usr/bin/python3 -m unittest discover -s tests
+cargo test --manifest-path runtime/Cargo.toml --features sqlite
 ```

@@ -1,7 +1,8 @@
 # Release checklist
 
-Current version: **0.5.1 (draft)**. PyPI and crates.io are published at
-0.5.1; npm 0.5.1 awaits an interactive 2FA publish.
+Current version: **0.5.1 (draft)**. PyPI `ccp-protocol` and crates.io
+`ccp-kernel` are published at 0.5.1; npm `ccp-core` awaits an interactive 2FA
+publish and `ccp-runtime` is packaged but not published.
 
 > Local artifacts below were built from a clean working tree. Rebuild
 > everything from the tagged commit before any publish; the working tree may
@@ -14,6 +15,7 @@ Current version: **0.5.1 (draft)**. PyPI and crates.io are published at
 | npm (`ccp-core`) | `ccp-core-0.5.1.tgz` — 50 files, 41.0 kB | `npm pack`; contains only `dist/`, `README.md`, `package.json` | **Not yet published** |
 | PyPI (`ccp-protocol`) | `ccp_protocol-0.5.1-py3-none-any.whl` — 41,886 bytes | wheel built; includes `ccp.adapters`, `ccp.identity`, `ccp.grants`, `ccp.stores_sqlite` | **Published 0.5.1** |
 | crates.io (`ccp-kernel`) | `ccp-kernel-0.5.1.crate` — 17 files, 18.7 KiB compressed | `cargo package` verified the build | **Published 0.5.1** |
+| crates.io (`ccp-runtime`) | new crate; `cargo package` verified locally | builds against `ccp-kernel` 0.5.1 | **Not yet published** |
 | Maven Central | none | — | Not prepared: no Gradle artifact; the JVM binding is a script + JNA |
 | SwiftPM | none | — | Deferred: Swift toolchain; Apple targets need Xcode |
 | Google Maven (AAR) | Android `.so` only | arm64 + x86_64 ELF verified | Blocked: Android SDK/Gradle for an AAR |
@@ -70,6 +72,9 @@ The wheel contains `ccp/` and `ccp/adapters/`. Optional extras: `fastapi`,
 ```sh
 cargo package --allow-dirty --manifest-path kernel/Cargo.toml
 # cargo publish --manifest-path kernel/Cargo.toml   (after token + license)
+
+cargo package --allow-dirty --features sqlite --manifest-path runtime/Cargo.toml
+# cargo publish --manifest-path runtime/Cargo.toml  (after ccp-kernel is available)
 ```
 
 `cargo package` warns about missing documentation, homepage, and repository
@@ -138,6 +143,7 @@ quickstarts (see `Clean-environment verification`).
 - [x] Publish PyPI (`ccp-protocol` 0.5.1)
 - [ ] Publish npm (`ccp-core` 0.5.1) — needs interactive 2FA
 - [x] Publish crates.io (`ccp-kernel` 0.5.1)
+- [ ] Publish crates.io (`ccp-runtime` 0.5.1) — after `ccp-kernel` 0.5.1
 - [x] Adopt transport and namespace profiles normatively (§25.7, §19.2.1)
 - [x] Adopt the identity and admission profile (§25.8)
 - [ ] Install each package in a clean container and run the quickstarts:
@@ -154,6 +160,10 @@ cargo clippy --manifest-path kernel/Cargo.toml --all-targets -- -D warnings
 cargo fmt --manifest-path kernel/Cargo.toml --check
 cargo build --release --manifest-path kernel/Cargo.toml
 cargo build --release --target wasm32-unknown-unknown --manifest-path kernel/Cargo.toml
+cargo test --manifest-path runtime/Cargo.toml --features sqlite
+cargo clippy --manifest-path runtime/Cargo.toml --all-targets --features sqlite -- -D warnings
+cargo fmt --manifest-path runtime/Cargo.toml --check
+cargo run --example quickstart --manifest-path runtime/Cargo.toml
 cc -Wall -Wextra -I kernel/include \
    kernel/c-tests/smoke.c kernel/target/release/libccp_kernel.a \
    -lpthread -ldl -lm -o /tmp/ccp-smoke && /tmp/ccp-smoke
@@ -167,11 +177,13 @@ bindings/kotlin/build.sh test
 npm --prefix sdk/typescript pack --dry-run
 /usr/bin/python3 -m pip wheel --no-deps --no-build-isolation --wheel-dir /tmp/ccp-wheel sdk/python
 cargo package --allow-dirty --manifest-path kernel/Cargo.toml
+cargo package --allow-dirty --features sqlite --manifest-path runtime/Cargo.toml
 ```
 
 Expected: all suites green; 51 v1 + 38 v2 + 8 v3 + 39 v4 + 20 v5 vectors
-(v4 is TypeScript and Python only; v5 is contract validation); WASM 97/97;
-Kotlin 109/109; C smoke ok; interop wires identical; all three packages build.
+(v4/v5 run in TypeScript, Python, and Rust with three-way agreement); WASM
+97/97; Kotlin 109/109; C smoke ok; interop wires identical; all four packages
+build.
 
 ## Clean-environment verification (0.5.0)
 

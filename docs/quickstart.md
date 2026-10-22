@@ -17,12 +17,12 @@ Every CCP deployment runs the same five steps:
 | --- | --- | --- |
 | TypeScript | Full runtime: grants, replay, limits, confirmation, hosts, audit, adapters | `cd sdk/typescript && npm run quickstart` |
 | Python | Full runtime, same semantics | `cd sdk/python && python examples/quickstart.py` |
-| Rust | Kernel only: canonical JSON, Ed25519, schema, decision, state machine | `cargo run --example quickstart --manifest-path kernel/Cargo.toml` |
+| Rust | Full runtime via `ccp-runtime`: grants, replay, limits, confirmation, hosts, audit, SQLite | `cargo run --example quickstart --manifest-path runtime/Cargo.toml` |
 
-All three run in CI. The TypeScript and Python lanes are the complete loop;
-the Rust lane is the deterministic decision over values you supply, because
-the Rust runtime does not exist yet (see
-[`implementation-status.md`](implementation-status.md)).
+All three run in CI. Every lane exercises the complete loop: a signed
+manifest, a local grant, a signed signal, the runtime decision, and a refusal
+after revocation. The Rust kernel keeps a smaller decision-only example for
+callers that already own their state.
 
 ## TypeScript
 
@@ -97,32 +97,57 @@ after revoke: grant_revoked
 
 ## Rust
 
-Runnable file: [`kernel/examples/quickstart.rs`](../kernel/examples/quickstart.rs).
+Runnable file: [`runtime/examples/quickstart.rs`](../runtime/examples/quickstart.rs).
 
 ```rust
-use ccp_kernel::{decision::decide, parse_strict, serialize};
+use ccp_runtime::{create_grant, CreateGrantOptions, HostRegistry, Runtime,
+                  RuntimeOptions, SchemaRegistry};
 
-let grant = parse_strict(GRANT)?;
-let signal = parse_strict(SIGNAL)?;
-let outcome = decide(
-    Some(&grant), &signal, "key:ed25519:requester", "2026-10-22T12:00:00Z",
-    &seen, &counters, Some(&intent_spec), Some(&params_schema),
-    &["0.5-draft", "0.4-draft"],
-);
+let grant = create_grant(CreateGrantOptions {
+    id: None,
+    contact_id: "c-1".to_string(),
+    requester_key: requester_key_id.clone(),
+    manifest: manifest.clone().into(),
+    intents: vec!["example.lookup".to_string()],
+    limits: None,
+    confirmation: None,
+    capabilities: None,
+    placement: None,
+    egress: None,
+    created_at: Some("2026-10-22T10:00:00Z".to_string()),
+    expires_at: "2030-01-01T00:00:00Z".to_string(),
+    state: None,
+    state_reason: None,
+    admitted_by: None,
+})?;
+
+let mut runtime = Runtime::new(RuntimeOptions {
+    schemas: Some(schemas),
+    hosts: Some(hosts),
+    ..RuntimeOptions::default()
+});
+runtime.grants.add(grant);
+runtime.manifests.add(manifest.clone());
+
+let decision = runtime.submit(&signed_signal, &requester_public_key);
+if decision.outcome == "confirmation_required" {
+    runtime.confirm(decision.pending_id.as_deref().unwrap(), true);
+}
 ```
 
 Output:
 
 ```text
-canonical grant: {"capabilities":["store.read"],...}
 decision: authorized
+result: {"item_id":"item-123","name":"Widget"}
 after revoke: grant_revoked
 ```
 
-The kernel does not store grants, count limits, resolve replay, hold pending
-confirmations, or mediate hosts. Those live in the TypeScript and Python
-runtimes. A Rust application that needs them must port the runtime or call
-one of those SDKs.
+The runtime is synchronous: mutating methods take `&mut self`, and callers own
+concurrency. The kernel example at
+[`kernel/examples/quickstart.rs`](../kernel/examples/quickstart.rs) remains the
+right entry point when you only need the deterministic §10.3 decision over
+values you already loaded.
 
 ## What each step maps to
 
